@@ -61,8 +61,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: purple,
-                          borderRadius: BorderRadius.circular(14),
+                          color: accent,
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Icon(
                           Icons.auto_stories_outlined,
@@ -71,27 +71,25 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'classroom.',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 30,
-                          letterSpacing: -1.5,
+                      const Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: BrandWordmark(fontSize: 28),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 38),
-                  const Tag('YOUR STUDENT LEARNING SPACE'),
+                  const Tag('STUDENT ACCESS'),
                   const SizedBox(height: 20),
                   Text(
-                    register
-                        ? 'Your next chapter\nstarts here.'
-                        : 'Good to have\nyou back.',
+                    register ? 'Join your\nclassroom.' : 'Welcome\nback.',
                     style: const TextStyle(
-                      fontSize: 36,
+                      fontFamily: 'Lora',
+                      fontSize: 42,
                       height: 1.15,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: -1,
                     ),
                   ),
@@ -99,7 +97,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(
                     register
                         ? 'Create your student account and start learning.'
-                        : 'Your courses, your progress, your possibilities.',
+                        : 'Sign in for your courses, assignments, and feedback.',
                     style: const TextStyle(
                       color: muted,
                       fontSize: 13,
@@ -124,6 +122,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     controller: email,
                     decoration: const InputDecoration(
                       labelText: 'Email address',
+                      counterText: '',
                     ),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
@@ -183,7 +182,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Text(
                         error!,
                         style: const TextStyle(
-                          color: Color(0xFFB85B72),
+                          color: Color(0xFF9A3F31),
                           fontSize: 12,
                           height: 1.6,
                         ),
@@ -233,7 +232,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 23),
                   const Center(
                     child: Text(
-                      'Made for students. Connected to your classroom.',
+                      'KNOWHERE TO GROW / STUDENT ACCESS',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: muted, fontSize: 10),
                     ),

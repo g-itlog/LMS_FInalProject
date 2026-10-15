@@ -17,11 +17,13 @@ import 'package:classroom_mobile/theme.dart';
 // Fixtures contain only seeded demonstration records read from the real API.
 class FixtureApi extends LmsApi {
   final Json fixture;
+  final List<String> requests = [];
   FixtureApi(this.fixture) {
     user = Map<String, dynamic>.from(fixture['user']);
   }
   @override
   Future<dynamic> get(String path) async {
+    requests.add(path);
     if (path == '/dashboard') return fixture['dashboard'];
     if (path.startsWith('/courses?')) return fixture['catalog'];
     if (path.startsWith('/courses/')) return fixture['course'];
@@ -39,12 +41,9 @@ void main() {
     fixture = Map<String, dynamic>.from(
       jsonDecode(await File('test/fixtures/demo.json').readAsString()),
     );
-    final systemFont = File('C:/Windows/Fonts/segoeui.ttf');
-    if (await systemFont.exists()) {
-      final loader = FontLoader('Roboto');
-      loader.addFont(
-        Future.value(ByteData.sublistView(await systemFont.readAsBytes())),
-      );
+    for (final family in ['PublicSans', 'Lora']) {
+      final loader = FontLoader(family);
+      loader.addFont(rootBundle.load('assets/fonts/$family.ttf'));
       await loader.load();
     }
   });
@@ -59,7 +58,7 @@ void main() {
         key: key,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: classroomTheme(),
+          theme: knowhereTheme(),
           home: screen,
         ),
       ),
@@ -173,6 +172,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
+        theme: knowhereTheme(),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,
@@ -186,6 +186,69 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    api.dispose();
+  });
+  testWidgets('Student desk opens the earliest unsubmitted assignment', (
+    tester,
+  ) async {
+    final data = Map<String, dynamic>.from(jsonDecode(jsonEncode(fixture)));
+    final assignments = records(data['dashboard']['assignments']);
+    final now = DateTime.now();
+    for (var index = 0; index < assignments.length; index++) {
+      assignments[index]['dueDate'] = now
+          .add(Duration(days: 10 - index))
+          .toIso8601String();
+    }
+    data['dashboard']['assignments'] = assignments;
+    data['dashboard']['submissions'] = [];
+    final expected = assignments.last;
+    final api = FixtureApi(data);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: knowhereTheme(),
+        home: HomeScreen(api: api),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(expected['title']).first, findsOneWidget);
+    await tester.tap(find.text('View assignment'));
+    await tester.pumpAndSettle();
+    expect(api.requests, contains('/courses/${expected['courseId']}'));
+    expect(find.text('Your classroom'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    api.dispose();
+  });
+  testWidgets('Student login and desk fit 320px with larger text', (
+    tester,
+  ) async {
+    final api = FixtureApi(fixture);
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Widget app(Widget screen) => MaterialApp(
+      theme: knowhereTheme(),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: const TextScaler.linear(1.3)),
+        child: child!,
+      ),
+      home: screen,
+    );
+    await tester.pumpWidget(app(AuthScreen(api: api)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(app(HomeScreen(api: api)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Courses').last);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     api.dispose();

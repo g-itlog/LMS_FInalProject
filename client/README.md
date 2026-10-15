@@ -1,4 +1,4 @@
-# Classroom LMS web client
+# Knowhere to Grow web client
 
 See the [root README](../README.md) for setup, credentials, workflows, tests, and submission materials. This client uses React, React Router, React hooks/context, Axios, and Bootstrap.
 

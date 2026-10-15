@@ -1,4 +1,4 @@
-# Classroom · Flutter student application
+# Knowhere to Grow · Flutter student application
 
 This is the **student-only** Flutter Android/iOS app, with a browser preview, for the same Express backend used by the React web app. Instructors use the React web dashboard. Student-app authentication endpoints reject instructor accounts before issuing a token.
 
@@ -64,4 +64,6 @@ flutter test
 flutter build web --no-web-resources-cdn
 ```
 
-The rendering tests write Flutter widget screenshots to `../docs/screenshots/flutter-*.png` at 390 × 844 logical pixels. Another test checks the course view at 320 pixels with text scaling. These are actual Flutter-rendered UI images using demo-only API fixtures, not screenshots from an emulator or physical phone. Network behavior tests verify endpoints, student-only role checks, bearer headers, secure storage, and token expiry. The Express integration suite separately verifies complete mobile authentication and shared database behavior.
+The rendering tests write Flutter widget screenshots to `../docs/screenshots/flutter-*.png` at 390 × 844 logical pixels. Additional tests check login, dashboard, and course views at 320 pixels with 1.3× text scaling and verify the next-assignment action. These are actual Flutter-rendered UI images using demo-only API fixtures, not screenshots from an emulator or physical phone. Network behavior tests verify endpoints, student-only role checks, bearer headers, secure storage, and token expiry. The Express integration suite separately verifies complete mobile authentication and shared database behavior.
+
+The web and Flutter interfaces share an ink-blue, warm-paper design with Public Sans and Lora fonts bundled locally under the included SIL Open Font Licenses. After pulling font/theme changes, stop the running Flutter session, run `flutter pub get`, and run the app again so the updated asset bundle loads.

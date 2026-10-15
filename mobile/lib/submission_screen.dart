@@ -130,8 +130,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             Text(
               a['title'],
               style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+                fontFamily: 'Lora',
+                fontSize: 29,
+                fontWeight: FontWeight.w500,
                 letterSpacing: -.6,
               ),
             ),
@@ -177,14 +178,14 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             const SizedBox(height: 20),
             if (s != null) ...[
               AppCard(
-                color: const Color(0xFFF0EBF8),
+                color: const Color(0xFFEBE6D6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'YOUR SUBMISSION',
                       style: TextStyle(
-                        color: purple,
+                        color: accent,
                         letterSpacing: 1.3,
                         fontSize: 9,
                       ),
@@ -197,7 +198,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                     if (s['late'] == true)
                       const Padding(
                         padding: EdgeInsets.only(top: 10),
-                        child: Tag('Submitted late', color: Color(0xFFBD8E50)),
+                        child: Tag('Submitted late', color: Color(0xFF80501F)),
                       ),
                     if (s['file'] != null)
                       Padding(
@@ -214,7 +215,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             ],
             if (s?['grade'] != null) ...[
               AppCard(
-                color: const Color(0xFFEDF4E8),
+                color: const Color(0xFFE9EFE0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -232,7 +233,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF84976C),
+                        color: Color(0xFF365D43),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -297,7 +298,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
             ] else if (s?['grade'] == null)
               const Text(
                 'The submission deadline has passed.',
-                style: TextStyle(color: Color(0xFFB85B72), fontSize: 12),
+                style: TextStyle(color: Color(0xFF9A3F31), fontSize: 12),
               ),
             if (error != null)
               Padding(
@@ -305,7 +306,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                 child: Text(
                   error!,
                   style: const TextStyle(
-                    color: Color(0xFFB85B72),
+                    color: Color(0xFF9A3F31),
                     fontSize: 12,
                     height: 1.6,
                   ),

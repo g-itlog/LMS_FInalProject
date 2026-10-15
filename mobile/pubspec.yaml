@@ -1,5 +1,5 @@
 name: classroom_mobile
-description: Classroom LMS student application connected to the shared MERN API.
+description: Knowhere to Grow student application connected to the shared MERN API.
 publish_to: none
 version: 1.0.0+1
 environment:
@@ -21,3 +21,13 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/Lora-LICENSE.txt
+    - assets/fonts/PublicSans-LICENSE.txt
+  fonts:
+    - family: PublicSans
+      fonts:
+        - asset: assets/fonts/PublicSans.ttf
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/Lora.ttf

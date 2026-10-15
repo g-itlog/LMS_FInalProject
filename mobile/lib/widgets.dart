@@ -2,16 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'api.dart';
 
-const purple = Color(0xFF7861C7);
-const ink = Color(0xFF332B47);
-const muted = Color(0xFF8D829D);
-const surface = Color(0xFFF8F7FC);
+const accent = Color(0xFF244C59);
+const ink = Color(0xFF203D49);
+const muted = Color(0xFF5F6E70);
+const paper = Color(0xFFF7F5EF);
+const sheet = Color(0xFFFFFEFB);
+const line = Color(0xFFDEDED4);
+
+class BrandWordmark extends StatelessWidget {
+  final double fontSize;
+  const BrandWordmark({super.key, this.fontSize = 24});
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Knowhere to Grow',
+    excludeSemantics: true,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Knowhere',
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.8,
+            height: 1.05,
+          ),
+        ),
+        Text(
+          'to Grow',
+          style: TextStyle(
+            fontFamily: 'Lora',
+            fontSize: fontSize * .72,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -.3,
+            height: 1.3,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 Color courseColor(dynamic value) => switch (value) {
-  'blue' => const Color(0xFFE6EDFB),
-  'teal' => const Color(0xFFE3F2EC),
-  'orange' => const Color(0xFFFBEEDE),
-  'pink' => const Color(0xFFF7E5EF),
-  _ => const Color(0xFFEDE6FA),
+  'blue' => const Color(0xFFDCE7EB),
+  'teal' => const Color(0xFFDEE7D8),
+  'orange' => const Color(0xFFF0DFCE),
+  'pink' => const Color(0xFFEDDBD5),
+  _ => const Color(0xFFE9DFC4),
 };
 String date(dynamic value, {bool time = false}) {
   if (value == null) return '—';
@@ -29,7 +67,7 @@ void notify(BuildContext context, String text, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(text),
-      backgroundColor: error ? const Color(0xFFB85B72) : ink,
+      backgroundColor: error ? const Color(0xFF9A3F31) : ink,
       behavior: SnackBarBehavior.floating,
     ),
   );
@@ -50,9 +88,9 @@ class AppCard extends StatelessWidget {
     width: double.infinity,
     padding: padding,
     decoration: BoxDecoration(
-      color: color ?? Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: const Color(0xFFECE8F2)),
+      color: color ?? sheet,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: const Color(0xFFDEDED4)),
     ),
     child: child,
   );
@@ -61,7 +99,7 @@ class AppCard extends StatelessWidget {
 class Tag extends StatelessWidget {
   final String text;
   final Color color;
-  const Tag(this.text, {super.key, this.color = purple});
+  const Tag(this.text, {super.key, this.color = accent});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -88,15 +126,16 @@ class Heading extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w700,
+            fontFamily: 'Lora',
+            fontSize: 30,
+            fontWeight: FontWeight.w500,
             letterSpacing: -.8,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           subtitle,
-          style: const TextStyle(color: muted, height: 1.6, fontSize: 12),
+          style: const TextStyle(color: muted, height: 1.7, fontSize: 13),
         ),
       ],
     ),
@@ -112,7 +151,7 @@ class EmptyView extends StatelessWidget {
     child: Center(
       child: Column(
         children: [
-          const Icon(Icons.auto_stories_outlined, color: purple, size: 42),
+          const Icon(Icons.auto_stories_outlined, color: accent, size: 42),
           const SizedBox(height: 20),
           Text(
             title,

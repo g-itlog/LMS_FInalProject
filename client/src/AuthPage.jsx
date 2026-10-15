@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  BookOpen,
   Eye,
   EyeOff,
   ShieldCheck,
-  Sparkles,
+  ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "./auth";
 import { api, message } from "./api";
@@ -44,35 +43,43 @@ export default function AuthPage({ register = false }) {
       <aside className="auth-story">
         <Brand />
         <div className="auth-story-content">
-          <span className="auth-chip">
-            <Sparkles size={15} /> A better way to learn
-          </span>
+          <span className="auth-chip">YOUR LEARNING WORKSPACE</span>
           <h1>
-            Big ideas.
+            A place for
             <br />
-            Small steps.
+            your next
             <br />
-            <span>Endless possibilities.</span>
+            <span>great idea.</span>
           </h1>
           <p>
-            One place for your courses, your people,
-            <br className="desktop-only" /> and everything you’re working
-            toward.
+            Bring your courses, assignments, and class updates together. Spend
+            less time looking, and more time learning.
           </p>
-          <div className="auth-illustration">
-            <div className="illustration-orbit" />
-            <div className="illustration-card">
-              <span className="illustration-book">
-                <BookOpen size={42} />
-              </span>
-              <span className="illustration-lines">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span className="illustration-check">✓</span>
+          <div className="auth-index">
+            <div>
+              <span>01</span>
+              <strong>
+                A classroom, connected
+                <small>Courses and materials in one place.</small>
+              </strong>
+              <ArrowUpRight size={19} />
             </div>
-            <div className="floating-label">✦ &nbsp; Keep moving forward</div>
+            <div>
+              <span>02</span>
+              <strong>
+                Know what’s next
+                <small>Clear deadlines. Simple submissions.</small>
+              </strong>
+              <ArrowUpRight size={19} />
+            </div>
+            <div>
+              <span>03</span>
+              <strong>
+                Feedback that matters
+                <small>Keep track of your work and grades.</small>
+              </strong>
+              <ArrowUpRight size={19} />
+            </div>
           </div>
         </div>
         <div className="auth-story-footer">
@@ -84,15 +91,11 @@ export default function AuthPage({ register = false }) {
           <Brand />
         </div>
         <div className="auth-form-wrap">
-          <span className="eyebrow">WELCOME TO CLASSROOM</span>
-          <h2>
-            {register
-              ? "Your next chapter starts here."
-              : "Good to have you back."}
-          </h2>
+          <span className="eyebrow">WELCOME TO KNOWHERE TO GROW</span>
+          <h2>{register ? "Make yourself at home." : "Welcome back."}</h2>
           <p>
             {register
-              ? "Create an account and make room for something new."
+              ? "Create your account to join your classroom."
               : "Sign in to pick up where you left off."}
           </p>
           {register && (
@@ -190,7 +193,7 @@ export default function AuthPage({ register = false }) {
             </Button>
           </form>
           <div className="auth-switch">
-            {register ? "Already part of Classroom?" : "New around here?"}{" "}
+            {register ? "Already have an account?" : "New around here?"}{" "}
             <Link to={register ? "/login" : "/register"}>
               {register ? "Sign in" : "Create an account"}
             </Link>

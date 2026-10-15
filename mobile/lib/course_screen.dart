@@ -74,8 +74,9 @@ class _CourseScreenState extends State<CourseScreen> {
                     Text(
                       course['title'],
                       style: const TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Lora',
+                        fontSize: 27,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: -.5,
                       ),
                     ),
@@ -103,7 +104,7 @@ class _CourseScreenState extends State<CourseScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Your next chapter is here.',
+                        'Join this course.',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -215,7 +216,7 @@ class _CourseScreenState extends State<CourseScreen> {
                             : tab == 1
                             ? Icons.assignment_outlined
                             : Icons.campaign_outlined,
-                        color: purple,
+                        color: accent,
                         size: 23,
                       ),
                       const SizedBox(width: 12),
@@ -232,7 +233,7 @@ class _CourseScreenState extends State<CourseScreen> {
                         const Icon(
                           Icons.push_pin_outlined,
                           size: 17,
-                          color: purple,
+                          color: accent,
                         ),
                     ],
                   ),

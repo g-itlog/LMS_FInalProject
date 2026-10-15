@@ -1,5 +1,5 @@
 {
-  "name": "classroom-lms",
+  "name": "knowhere-to-grow",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -14,7 +14,8 @@
     "test": "npm --prefix server test",
     "seed": "npm --prefix server run seed",
     "seed:courses": "npm --prefix server run seed:courses",
-    "test:e2e": "npm --prefix client run test:e2e"
+    "test:e2e": "npm --prefix client run test:e2e",
+    "deploy:configure": "node server/scripts/configure-vercel.js"
   },
   "devDependencies": {
     "prettier": "^3.9.10"

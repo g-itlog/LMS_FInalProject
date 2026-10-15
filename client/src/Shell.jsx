@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, Outlet, useLocation } from "react-router-dom";
 import {
   BookOpen,
@@ -21,13 +21,13 @@ import { message } from "./api";
 
 export function Brand() {
   return (
-    <Link className="brand" to="/">
+    <Link className="brand" to="/" aria-label="Knowhere to Grow home">
       <span className="brand-mark">
         <BookOpen size={23} />
       </span>
-      <span>
-        classroom<span className="brand-dot">.</span>
-        <small>LEARN. CONNECT. GROW.</small>
+      <span className="brand-wordmark">
+        <span>Knowhere</span>
+        <span className="brand-second">to Grow</span>
       </span>
     </Link>
   );
@@ -42,6 +42,49 @@ const links = [
 export default function Shell() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia("(max-width: 760px)").matches,
+  );
+  const menuButton = useRef(null);
+  const sidebar = useRef(null);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 760px)");
+    const update = () => {
+      setMobile(query.matches);
+      if (!query.matches) setOpen(false);
+    };
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    const returnFocus = menuButton.current;
+    document.body.style.overflow = "hidden";
+    sidebar.current?.querySelector('[aria-label="Close navigation"]')?.focus();
+    const keydown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Tab") return;
+      const elements = [
+        ...sidebar.current.querySelectorAll("a[href], button:not([disabled])"),
+      ].filter((node) => node.getClientRects().length);
+      const first = elements[0],
+        last = elements.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", keydown);
+      returnFocus?.focus();
+    };
+  }, [open]);
   const location = useLocation();
   const current =
     links.find(([path]) =>
@@ -52,6 +95,9 @@ export default function Shell() {
   const instructor = user.role === "instructor";
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       {open && (
         <button
           className="sidebar-overlay"
@@ -59,7 +105,12 @@ export default function Shell() {
           aria-label="Close navigation"
         />
       )}
-      <aside className={`sidebar ${open ? "open" : ""}`}>
+      <aside
+        ref={sidebar}
+        id="workspace-navigation"
+        inert={mobile && !open}
+        className={`sidebar ${open ? "open" : ""}`}
+      >
         <div className="sidebar-brand">
           <Brand />
           <button
@@ -76,12 +127,12 @@ export default function Shell() {
           </span>
           <div>
             {instructor ? "Instructor workspace" : "Student workspace"}
-            <small>Classroom LMS</small>
+            <small>Knowhere to Grow</small>
           </div>
           <span className="online-dot" />
         </div>
         <div className="nav-label">WORKSPACE</div>
-        <nav>
+        <nav aria-label="Workspace">
           {links.map(([path, label, Icon]) => (
             <NavLink
               key={path}
@@ -98,20 +149,22 @@ export default function Shell() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <span className="note-symbol">✦</span>
-            <h4>
-              A little progress,
-              <br />
-              every single day.
-            </h4>
-            <p>Your next chapter starts here.</p>
-            {!instructor && (
-              <Link to="/courses?scope=catalog" onClick={() => setOpen(false)}>
-                Explore courses <ArrowUpRight size={15} />
-              </Link>
-            )}
-          </div>
+          <Link
+            className="sidebar-catalog"
+            to={instructor ? "/courses?create=1" : "/courses?scope=catalog"}
+            onClick={() => setOpen(false)}
+          >
+            <BookOpen size={21} />
+            <span>
+              {instructor ? "Start a new course" : "Find your next course"}
+              <small>
+                {instructor
+                  ? "Build your classroom"
+                  : "Browse the course catalog"}
+              </small>
+            </span>
+            <ArrowUpRight size={16} />
+          </Link>
           <NavLink
             to="/profile"
             className="nav-item"
@@ -133,7 +186,9 @@ export default function Shell() {
             <LogOut size={19} />
             Sign out
           </button>
-          <div className="sidebar-caption">Made for better learning.</div>
+          <div className="sidebar-caption">
+            KNOWHERE TO GROW / {instructor ? "FACULTY" : "STUDENT"}
+          </div>
         </div>
       </aside>
       <div className="main-shell">
@@ -141,6 +196,9 @@ export default function Shell() {
           <div className="breadcrumbs">
             <button
               className="icon-btn mobile-only"
+              ref={menuButton}
+              aria-expanded={open}
+              aria-controls="workspace-navigation"
               onClick={() => setOpen(true)}
               aria-label="Open navigation"
             >
@@ -181,12 +239,17 @@ export default function Shell() {
             </Link>
           </div>
         </header>
-        <main className="workspace-main" key={location.pathname}>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="workspace-main"
+          key={location.pathname}
+        >
           <Outlet />
         </main>
         <footer className="workspace-footer">
-          <span>© {new Date().getFullYear()} Classroom LMS</span>
-          <span>A space to learn, a place to grow.</span>
+          <span>© {new Date().getFullYear()} Knowhere to Grow</span>
+          <span>Your learning workspace.</span>
         </footer>
       </div>
     </div>

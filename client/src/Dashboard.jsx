@@ -31,11 +31,17 @@ export default function Dashboard() {
   if (error) return <ErrorState error={error} retry={reload} />;
   const graded = data.submissions.filter((s) => s.grade != null);
   const pending = data.submissions.filter((s) => s.grade == null);
-  const due = data.assignments.filter(
-    (a) =>
-      !data.submissions.some((s) => s.assignmentId === a._id) &&
-      new Date(a.dueDate) >= new Date(),
-  );
+  const due = data.assignments
+    .filter(
+      (a) =>
+        !data.submissions.some((s) => s.assignmentId === a._id) &&
+        new Date(a.dueDate) >= new Date(),
+    )
+    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  const next = instructor ? pending[0] : due[0];
+  const nextAssignment = instructor
+    ? data.assignments.find((a) => a._id === next?.assignmentId)
+    : next;
   const possible = graded.reduce(
     (sum, s) =>
       sum +
@@ -66,12 +72,12 @@ export default function Dashboard() {
   return (
     <>
       <PageHeading
-        eyebrow="LET’S MAKE TODAY COUNT"
-        title={`Hello, ${user.name.split(" ")[0]} 👋`}
+        eyebrow={instructor ? "TEACHING DESK" : "STUDENT DESK"}
+        title={`Hello, ${user.name.split(" ")[0]}.`}
         description={
           instructor
-            ? "Here’s what’s happening in your classrooms today."
-            : "A fresh day to learn something new. You’ve got this."
+            ? "Your courses, student work, and class updates."
+            : "Your coursework, deadlines, and feedback in one place."
         }
         action={
           <Link
@@ -86,39 +92,58 @@ export default function Dashboard() {
       <section className="welcome-banner">
         <div>
           <span className="banner-kicker">
-            {instructor
-              ? "INSPIRE THE NEXT CHAPTER"
-              : "YOUR FUTURE IS A WORK IN PROGRESS"}
+            {instructor ? "READY FOR YOUR REVIEW" : "NEXT ON YOUR SCHEDULE"}
           </span>
           <h2>
-            {instructor
-              ? "Great teaching starts\nwith a little connection."
-              : "Keep your curiosity.\nBuild your momentum."}
+            {nextAssignment?.title ||
+              (instructor
+                ? "Your review queue is clear."
+                : "No upcoming deadlines.")}
           </h2>
           <p>
-            {instructor
-              ? "Share a resource, start a conversation, make an impact."
-              : "Every lesson, every question, every small win moves you forward."}
+            {next
+              ? instructor
+                ? `Submitted by ${next.studentName} · ${formatDate(next.submittedAt)}`
+                : `${next.course?.code || "Assignment"} · Due ${formatDate(next.dueDate, true)}`
+              : instructor
+                ? "No student submissions are waiting for a grade."
+                : "No upcoming assignments. Your course materials are ready whenever you are."}
           </p>
-          <Link to={instructor ? "/assignments" : "/courses"}>
-            {instructor ? "Review your assignments" : "Go to my courses"}{" "}
+          <Link
+            to={
+              next
+                ? `/courses/${next.courseId}?tab=assignments${instructor ? `&review=${next.assignmentId}` : ""}`
+                : "/courses"
+            }
+          >
+            {next
+              ? instructor
+                ? "Review submission"
+                : "View assignment"
+              : "Go to my courses"}{" "}
             <ArrowRight size={17} />
           </Link>
         </div>
-        <div className="banner-art" aria-hidden="true">
-          <div className="art-circle" />
-          <div className="art-book back" />
-          <div className="art-book front">
-            <BookOpen size={66} strokeWidth={1.3} />
-            <span>
-              THE NEXT
-              <br />
-              CHAPTER
-            </span>
-          </div>
-          <span className="art-star one">✦</span>
-          <span className="art-star two">✧</span>
-          <span className="art-dot" />
+        <div className="schedule-stamp" aria-hidden="true">
+          <span>{instructor ? "IN REVIEW" : "DUE NEXT"}</span>
+          <strong>
+            {instructor
+              ? pending.length.toString().padStart(2, "0")
+              : next
+                ? new Intl.DateTimeFormat("en", { day: "2-digit" }).format(
+                    new Date(next.dueDate),
+                  )
+                : "—"}
+          </strong>
+          <span>
+            {instructor
+              ? "SUBMISSIONS"
+              : next
+                ? new Intl.DateTimeFormat("en", { month: "short" }).format(
+                    new Date(next.dueDate),
+                  )
+                : "ALL CLEAR"}
+          </span>
         </div>
       </section>
       <div className="stats-grid">
@@ -145,8 +170,8 @@ export default function Dashboard() {
                 </h2>
                 <p>
                   {instructor
-                    ? "The spaces where you make a difference."
-                    : "Your next discovery is a lesson away."}
+                    ? "Manage materials and keep your classes moving."
+                    : "Open a course to find materials and assignments."}
                 </p>
               </div>
               <Link to="/courses">
@@ -195,8 +220,8 @@ export default function Dashboard() {
                 <h2>{instructor ? "Recent submissions" : "Coming up next"}</h2>
                 <p>
                   {instructor
-                    ? "A little feedback goes a long way."
-                    : "Keep an eye on your next milestones."}
+                    ? "Student work awaiting a grade and feedback."
+                    : "Unsubmitted assignments, ordered by deadline."}
                 </p>
               </div>
               <Link to={instructor ? "/grades" : "/assignments"}>
@@ -246,7 +271,7 @@ export default function Dashboard() {
                 <span>
                   {instructor
                     ? "You’re all caught up on reviews."
-                    : "No upcoming deadlines. A little room to breathe."}
+                    : "You have no upcoming assignments."}
                 </span>
               </div>
             )}
@@ -289,19 +314,29 @@ export default function Dashboard() {
               All announcements <ArrowRight size={15} />
             </Link>
           </section>
-          <section className="tip-card">
-            <span>✦</span>
-            <div className="eyebrow">A LITTLE REMINDER</div>
-            <h3>
-              Progress is progress,
-              <br />
-              no matter how small.
-            </h3>
-            <p>
-              {instructor
-                ? "Your encouragement might be the reason someone keeps going."
-                : "Set aside a few minutes today. Your future self will thank you."}
-            </p>
+          <section className="desk-links">
+            <div className="eyebrow">
+              {instructor ? "TEACHING TOOLS" : "YOUR RECORD"}
+            </div>
+            <Link to="/grades">
+              <GraduationCap size={20} />
+              <span>
+                {instructor ? "Review submissions" : "Grades & feedback"}
+                <small>
+                  {instructor
+                    ? `${pending.length} awaiting review`
+                    : `${graded.length} graded assignments`}
+                </small>
+              </span>
+              <ArrowUpRight size={17} />
+            </Link>
+            <Link to="/profile">
+              <Users size={20} />
+              <span>
+                My profile<small>Account and security settings</small>
+              </span>
+              <ArrowUpRight size={17} />
+            </Link>
           </section>
         </aside>
       </div>

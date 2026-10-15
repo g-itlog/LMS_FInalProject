@@ -1,8 +1,10 @@
-# Classroom LMS
+# Knowhere to Grow
 
 A learning management system for students and instructors, built with **MongoDB, Express, React, and Node.js**, plus a **Flutter student app**. The web and mobile apps use the same backend and records.
 
 Source repository: [g-itlog/LMS_FInalProject](https://github.com/g-itlog/LMS_FInalProject). See [GitHub and deployment notes](docs/GITHUB_AND_DEPLOYMENT.md) before importing the project into Vercel, including API routing, private environment variables, and the attachment-size limit.
+
+To run independently of your PC, follow the [Vercel + Render deployment walkthrough](docs/DEPLOYMENT_WALKTHROUGH.md). Once the backend is live, `npm run deploy:configure -- https://YOUR-ACTUAL-BACKEND.onrender.com` creates `client/vercel.json` with the real API route and React Router fallback. Commit that generated file before deploying the Vercel frontend.
 
 ## Project folders
 
@@ -34,6 +36,12 @@ Open **http://localhost:5173**. The API listens on port **8000**. Vite proxies `
 To start only the backend from the `server` folder, run `npm run server`, `npm start`, or `node server.js`. From the project root, `npm run server` also starts only the backend. Run one backend instance at a time; `npm run dev` from the root already starts it.
 
 All project helper scripts live in `server/scripts`. From inside `server`, `npm run dev:all` starts both the API and web client; `npm run dev` starts only the API with file watching. From the project root, `npm run dev` still starts both.
+
+The combined launcher checks both ports first and reuses healthy LMS services that are already running. The client `npm run dev` also recognizes an existing LMS frontend and prints its URL instead of starting a duplicate. If another application owns the port, startup gives an explanatory message; it never terminates that application automatically. Stopping the combined launcher stops only processes that it started.
+
+Successful backend startup explicitly prints `MongoDB connected successfully` and the database name before printing the API address. You can verify the live database connection at `http://localhost:8000/api/health`; a healthy response includes `"database":"connected"`. The frontend forwards the same check at `http://localhost:5173/api/health`.
+
+Use either the single root command `npm run dev`, or two terminals (`npm start` in `server` and `npm run dev` in `client`). Keep the running terminals open. `npm start`, `npm run server`, and `node server.js` are alternative commands for the same backend; do not launch them all together.
 
 For a production-style local run:
 

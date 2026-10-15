@@ -157,7 +157,7 @@ test("student desktop and phone workflows render without browser errors", async 
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Good to have you back." }),
+    page.getByRole("heading", { name: "Welcome back." }),
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -242,3 +242,79 @@ test("instructor reviews student work and performs course content CRUD", async (
     page.getByRole("heading", { name: "My courses", exact: true }),
   ).toBeVisible();
 });
+
+for (const role of ["student", "instructor"]) {
+  test(
+    role +
+      " workspace fits phone, tablet, and desktop with accessible navigation",
+    async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await login(page, role + "@classroom.test");
+      await page.evaluate(() => document.fonts.ready);
+      expect(
+        await page.evaluate(
+          () =>
+            document.fonts.check('16px "Lora"') &&
+            document.fonts.check('16px "Public Sans"'),
+        ),
+      ).toBe(true);
+      const menu = page.getByRole("button", { name: "Open navigation" });
+      await expect(page.locator("#workspace-navigation")).toHaveAttribute(
+        "inert",
+        "",
+      );
+      await menu.click();
+      await expect(
+        page.locator("aside").getByRole("button", { name: "Close navigation" }),
+      ).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeFocused();
+      await expect(menu).toHaveAttribute("aria-expanded", "false");
+      const data = await page.evaluate(async () =>
+        (await fetch("/api/dashboard")).json(),
+      );
+      const due = data.assignments
+        .filter(
+          (a) =>
+            !data.submissions.some((s) => s.assignmentId === a._id) &&
+            new Date(a.dueDate) >= new Date(),
+        )
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      if (role === "student" && due.length) {
+        await expect(page.locator(".welcome-banner h2")).toHaveText(
+          due[0].title,
+        );
+        await page.locator(".welcome-banner a").click();
+        await expect(
+          page.getByRole("tab", { name: /Assignments/ }),
+        ).toHaveAttribute("aria-selected", "true");
+      }
+      for (const width of [320, 390, 768, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        for (const route of [
+          "/",
+          "/courses",
+          "/assignments",
+          "/grades",
+          "/announcements",
+          "/profile",
+        ]) {
+          await page.goto(route);
+          await expect(page.locator("main h1")).toBeVisible();
+          if (width === 390 && route === "/assignments")
+            await page.screenshot({
+              path: `${screenshots}/web-phone-assignments-${role}.png`,
+              fullPage: true,
+              animations: "disabled",
+            });
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+            role + " " + route + " at " + width + "px",
+          ).toBe(true);
+        }
+      }
+    },
+  );
+}

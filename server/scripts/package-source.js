@@ -93,7 +93,7 @@ end.writeUInt32LE(index.length, 12);
 end.writeUInt32LE(offset, 16);
 await fs.mkdir(path.join(root, "submission"), { recursive: true });
 await fs.writeFile(
-  path.join(root, "submission/Classroom-LMS-Source.zip"),
+  path.join(root, "submission/Knowhere-to-Grow-Source.zip"),
   Buffer.concat([...local, index, end]),
 );
 console.log(

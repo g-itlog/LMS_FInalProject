@@ -61,7 +61,12 @@ export function createApp({ db, bucket, config }) {
   });
   app.get("/api/health", async (req, res) => {
     await db.command({ ping: 1 });
-    res.json({ status: "ok", database: "connected" });
+    res.json({
+      status: "ok",
+      database: "connected",
+      service: "classroom-lms-api",
+      databaseName: db.databaseName,
+    });
   });
   const authLimit = rateLimit({
     windowMs: 900000,

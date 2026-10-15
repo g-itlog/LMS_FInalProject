@@ -2,6 +2,8 @@
 
 Repository: [g-itlog/LMS_FInalProject](https://github.com/g-itlog/LMS_FInalProject)
 
+For the step-by-step Vercel frontend + Render API setup, use [the deployment walkthrough](DEPLOYMENT_WALKTHROUGH.md). Run `npm run deploy:configure -- https://YOUR-ACTUAL-BACKEND.onrender.com` after Render assigns a live API URL; this generates the frontend routing configuration without guessing a hostname.
+
 The repository contains the React client, Express server, Flutter student app, setup instructions, documentation, and tests. Database records remain in MongoDB Atlas; GitHub stores source files, not the database.
 
 ## Work with this repository

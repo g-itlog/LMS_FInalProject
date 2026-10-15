@@ -1,10 +1,10 @@
 {
-  "name": "classroom-lms-web",
+  "name": "knowhere-to-grow-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node ../server/scripts/start-client.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -247,15 +247,21 @@ export function CourseCard({ course }) {
     <Link to={`/courses/${course._id}`} className="course-card">
       <div className={`course-cover ${course.color || "violet"}`}>
         <span className="course-code">{course.code}</span>
-        <BookOpen size={70} strokeWidth={1} />
-        <span className="cover-dots" />
+        <span className="cover-category">{course.category}</span>
+        <span className="cover-monogram" aria-hidden="true">
+          {course.code.replace(/[^0-9]/g, "").slice(-3) ||
+            course.title.slice(0, 2).toUpperCase()}
+        </span>
       </div>
       <div className="course-card-body">
         <div className="course-category">{course.category}</div>
         <h3>{course.title}</h3>
         <p>{course.instructorName || "Your classroom"}</p>
         <div className="course-card-footer">
-          <span>{course.studentCount ?? "—"} students</span>
+          <span>
+            {course.studentCount ?? "—"}{" "}
+            {course.studentCount === 1 ? "student" : "students"}
+          </span>
           <span>
             {course.enrolled ? (
               <>

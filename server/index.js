@@ -19,6 +19,9 @@ try {
     process.env.MONGO_URL,
     process.env.MONGO_DB_NAME || "classroom_lms",
   );
+  console.log(
+    `MongoDB connected successfully (database: ${database.db.databaseName}).`,
+  );
   const config = {
     secret,
     inviteCode: process.env.INSTRUCTOR_INVITE_CODE,
@@ -32,9 +35,15 @@ try {
       .map((s) => s.trim()),
   };
   const app = createApp({ ...database, config });
-  const server = app.listen(Number(process.env.PORT) || 8000, "0.0.0.0", () =>
-    console.log(`Classroom LMS API ready on port ${process.env.PORT || 8000}`),
-  );
+  const server = app.listen(Number(process.env.PORT) || 8000, "0.0.0.0", () => {
+    console.log(
+      `Knowhere to Grow API ready at http://localhost:${process.env.PORT || 8000}`,
+    );
+    console.log(
+      `Database health: http://localhost:${process.env.PORT || 8000}/api/health`,
+    );
+    console.log("Keep this terminal open. Press Ctrl+C to stop this server.");
+  });
   server.once("error", async (error) => {
     if (error.code === "EADDRINUSE") {
       console.error(

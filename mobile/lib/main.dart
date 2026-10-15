@@ -7,16 +7,16 @@ import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ClassroomApp());
+  runApp(const KnowhereToGrowApp());
 }
 
-class ClassroomApp extends StatefulWidget {
-  const ClassroomApp({super.key});
+class KnowhereToGrowApp extends StatefulWidget {
+  const KnowhereToGrowApp({super.key});
   @override
-  State<ClassroomApp> createState() => _ClassroomAppState();
+  State<KnowhereToGrowApp> createState() => _KnowhereToGrowAppState();
 }
 
-class _ClassroomAppState extends State<ClassroomApp> {
+class _KnowhereToGrowAppState extends State<KnowhereToGrowApp> {
   final api = LmsApi();
   final navigator = GlobalKey<NavigatorState>();
   late Future<void> startup;
@@ -46,9 +46,9 @@ class _ClassroomAppState extends State<ClassroomApp> {
   @override
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: navigator,
-    title: 'Classroom',
+    title: 'Knowhere to Grow',
     debugShowCheckedModeBanner: false,
-    theme: classroomTheme(),
+    theme: knowhereTheme(),
     home: FutureBuilder<void>(
       future: startup,
       builder: (context, snapshot) {

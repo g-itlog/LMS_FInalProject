@@ -80,10 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(22),
     children: [
-      const Heading(
-        'My profile',
-        'A little about you. A space that feels like yours.',
-      ),
+      const Heading('My profile', 'Personal details and account security.'),
       AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       const SizedBox(height: 25),
       const Center(
         child: Text(
-          'Classroom · Made for better learning.',
+          'Knowhere to Grow',
           style: TextStyle(fontSize: 10, color: muted),
         ),
       ),

@@ -219,7 +219,7 @@ export async function seedAdditionalCourses(db, instructor) {
     ) {
       const filename = `${details.code.replaceAll(" ", "-")}-practice.txt`;
       const contents = Buffer.from(
-        `${details.title}\n${details.code} | Classroom LMS\n\nPRACTICE WORKSHEET\n\n${worksheet}\n\nNEXT ASSIGNMENT\n${assignment.title}\n\n${assignment.instructions}\n\nSubmission checklist\n- Use fictional data.\n- Include your source files and test evidence.\n- Keep passwords and .env files out of your submission.\n- Check the assignment's current deadline in Classroom.\n`,
+        `${details.title}\n${details.code} | Knowhere to Grow\n\nPRACTICE WORKSHEET\n\n${worksheet}\n\nNEXT ASSIGNMENT\n${assignment.title}\n\n${assignment.instructions}\n\nSubmission checklist\n- Use fictional data.\n- Include your source files and test evidence.\n- Keep passwords and .env files out of your submission.\n- Check the assignment's current deadline in Knowhere to Grow.\n`,
         "utf8",
       );
       const stream = bucket.openUploadStream(filename, {

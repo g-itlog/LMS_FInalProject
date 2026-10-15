@@ -68,9 +68,7 @@ export default function ActivityPage({ type }) {
   return (
     <>
       <PageHeading
-        eyebrow={
-          type === "announcements" ? "STAY IN THE LOOP" : "ONE STEP AT A TIME"
-        }
+        eyebrow={type === "announcements" ? "COURSE UPDATES" : "COURSEWORK"}
         title={title}
         description={
           type === "announcements"
@@ -78,8 +76,8 @@ export default function ActivityPage({ type }) {
             : type === "assignments"
               ? "Your tasks and deadlines, all in one place."
               : instructor
-                ? "Recognize effort. Guide the next step."
-                : "See how far you’ve come, and what to work on next."
+                ? "Review student work, assign grades, and leave feedback."
+                : "Your submitted work, grades, and instructor feedback."
         }
       />
       <div className="list-toolbar">
@@ -176,9 +174,9 @@ export default function ActivityPage({ type }) {
           ))}
         </div>
       ) : (
-        <div className="panel">
+        <div className="panel activity-panel">
           <div className="table-responsive">
-            <table className="table app-table">
+            <table className="table app-table activity-table" role="table">
               <thead>
                 <tr>
                   <th>Assignment</th>
@@ -217,7 +215,13 @@ export default function ActivityPage({ type }) {
                           </p>
                         )}
                       </td>
-                      <td>
+                      <td
+                        data-label={
+                          instructor && type === "grades"
+                            ? "Student"
+                            : "Deadline"
+                        }
+                      >
                         {instructor && type === "grades"
                           ? a.studentName
                           : formatDate(a.dueDate, true)}
@@ -236,7 +240,7 @@ export default function ActivityPage({ type }) {
                         </Badge>
                       </td>
                       {type === "grades" && (
-                        <td className="grade-cell">
+                        <td className="grade-cell" data-label="Grade">
                           {submission?.grade != null
                             ? `${submission.grade} / ${assignment?.maxPoints}`
                             : "—"}

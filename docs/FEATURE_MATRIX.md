@@ -1,6 +1,6 @@
 # Rubric and feature map
 
-Project: **Classroom LMS — A MERN Learning Management System with a Flutter Student Application**
+Project: **Knowhere to Grow — A MERN Learning Management System with a Flutter Student Application**
 
 The professor’s list offered Library Management System as an example. This implementation follows the requested learning management scope. Confirm the final project title with the adviser.
 

@@ -66,14 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
     appBar: AppBar(
       title: Row(
         children: [
-          const Icon(Icons.auto_stories_outlined, color: purple, size: 24),
+          const Icon(Icons.auto_stories_outlined, color: accent, size: 24),
           const SizedBox(width: 9),
-          const Text(
-            'classroom.',
-            style: TextStyle(
-              fontSize: 22,
-              letterSpacing: -1,
-              fontWeight: FontWeight.w800,
+          const Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: BrandWordmark(fontSize: 23),
             ),
           ),
         ],
@@ -84,11 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
           tooltip: 'My profile',
           icon: CircleAvatar(
             radius: 17,
-            backgroundColor: const Color(0xFFE8DFF6),
+            backgroundColor: const Color(0xFFE5E9DF),
             child: Text(
               widget.api.user!['name'].toString().substring(0, 1).toUpperCase(),
               style: const TextStyle(
-                color: purple,
+                color: accent,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -127,9 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
     bottomNavigationBar: NavigationBar(
       height: 71,
       selectedIndex: tab,
-      backgroundColor: Colors.white,
-      indicatorColor: const Color(0xFFEDE6FA),
-      labelTextStyle: const WidgetStatePropertyAll(TextStyle(fontSize: 10)),
       onDestinationSelected: (index) => setState(() {
         tab = index;
         search = '';
@@ -140,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.grid_view_outlined),
-          selectedIcon: Icon(Icons.grid_view_rounded, color: purple),
+          selectedIcon: Icon(Icons.grid_view_rounded, color: accent),
           label: 'Home',
         ),
         NavigationDestination(
@@ -167,13 +163,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final allCourses = records(data['courses']);
     final assignments = records(data['assignments']);
     final submissions = records(data['submissions']);
-    final upcoming = assignments
-        .where(
-          (a) =>
-              DateTime.parse(a['dueDate']).isAfter(DateTime.now()) &&
-              !submissions.any((s) => s['assignmentId'] == a['_id']),
-        )
-        .toList();
+    final upcoming =
+        assignments
+            .where(
+              (a) =>
+                  DateTime.parse(a['dueDate']).isAfter(DateTime.now()) &&
+                  !submissions.any((s) => s['assignmentId'] == a['_id']),
+            )
+            .toList()
+          ..sort(
+            (a, b) => DateTime.parse(
+              a['dueDate'],
+            ).compareTo(DateTime.parse(b['dueDate'])),
+          );
+    final next = upcoming.firstOrNull;
     final graded = submissions.where((s) => s['grade'] != null).toList();
     num earned = 0, possible = 0;
     for (final s in graded) {
@@ -188,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const Text(
-          'LET’S MAKE TODAY COUNT',
+          'STUDENT DESK',
           style: TextStyle(
             fontSize: 9,
             color: muted,
@@ -198,80 +201,139 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 10),
         Heading(
-          'Hello, ${widget.api.user!['name'].toString().split(' ').first} 👋',
-          'A fresh day to learn something new. You’ve got this.',
+          'Hello, ${widget.api.user!['name'].toString().split(' ').first}.',
+          'Your coursework, deadlines, and feedback.',
         ),
         AppCard(
-          color: const Color(0xFFEDE6F8),
+          color: ink,
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Tag('YOUR NEXT CHAPTER'),
-              const SizedBox(height: 17),
-              const Text(
-                'Keep your curiosity.\nBuild your momentum.',
+              const Row(
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    color: Color(0xFFE4BD79),
+                    size: 17,
+                  ),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'NEXT ON YOUR SCHEDULE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 1.2,
+                        color: Color(0xFFE4BD79),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 19),
+              Text(
+                next?['title'] ?? 'No upcoming deadlines.',
                 style: TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -.7,
-                  height: 1.3,
+                  fontFamily: 'Lora',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w400,
+                  height: 1.35,
+                  color: Color(0xFFF7F5EF),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Every small step moves you forward.',
-                style: TextStyle(fontSize: 12, color: muted),
+              Text(
+                next != null
+                    ? 'Due ${date(next['dueDate'], time: true)}'
+                    : 'No upcoming assignments. Your course materials are ready when you are.',
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.7,
+                  color: Color(0xFFCAD6D0),
+                ),
               ),
               const SizedBox(height: 15),
-              TextButton.icon(
-                onPressed: () => setState(() => tab = 1),
-                icon: const Icon(Icons.arrow_forward, size: 17),
-                label: const Text('Go to my courses'),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFF0E5CD),
+                    foregroundColor: ink,
+                  ),
+                  onPressed: () => next == null
+                      ? setState(() => tab = 1)
+                      : openCourse(next['courseId'], initialTab: 1),
+                  icon: const Icon(Icons.arrow_forward, size: 17),
+                  label: Text(
+                    next == null ? 'Go to my courses' : 'View assignment',
+                  ),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 17),
-        Row(
-          children: [
-            Expanded(
-              child: metric(
-                Icons.auto_stories_outlined,
-                '${allCourses.length}',
-                'Enrolled courses',
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: metric(
+                      Icons.auto_stories_outlined,
+                      '${allCourses.length}',
+                      'Enrolled courses',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: metric(
+                      Icons.schedule_outlined,
+                      '${upcoming.length}',
+                      'Upcoming tasks',
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: metric(
-                Icons.schedule_outlined,
-                '${upcoming.length}',
-                'Upcoming tasks',
+              const Divider(height: 1),
+              Row(
+                children: [
+                  Expanded(
+                    child: metric(
+                      Icons.task_alt_outlined,
+                      '${submissions.length}',
+                      'Work submitted',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: metric(
+                      Icons.school_outlined,
+                      possible > 0
+                          ? '${(earned * 100 / possible).round()}%'
+                          : '—',
+                      'Overall grade',
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: metric(
-                Icons.task_alt_outlined,
-                '${submissions.length}',
-                'Work submitted',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: metric(
-                Icons.school_outlined,
-                possible > 0 ? '${(earned * 100 / possible).round()}%' : '—',
-                'Overall grade',
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 28),
+        sectionTitle('Coming up next', () => setState(() => tab = 2)),
+        const SizedBox(height: 14),
+        if (upcoming.isEmpty)
+          const AppCard(
+            child: Text(
+              'You have no upcoming assignments.',
+              style: TextStyle(color: muted, fontSize: 12),
+            ),
+          )
+        else
+          ...upcoming.take(3).map((a) => assignmentTile(a, submissions)),
+        const SizedBox(height: 24),
         sectionTitle('My courses', () => setState(() => tab = 1)),
         const SizedBox(height: 14),
         if (allCourses.isEmpty)
@@ -291,120 +353,150 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
         const SizedBox(height: 15),
-        sectionTitle('Coming up next', () => setState(() => tab = 2)),
-        const SizedBox(height: 14),
-        if (upcoming.isEmpty)
-          const AppCard(
-            child: Text(
-              'No upcoming deadlines. A little room to breathe.',
-              style: TextStyle(color: muted, fontSize: 12),
-            ),
-          )
-        else
-          ...upcoming.take(3).map((a) => assignmentTile(a, submissions)),
       ],
     );
   }
 
-  Widget metric(IconData icon, String value, String label) => AppCard(
+  Widget metric(IconData icon, String value, String label) => Padding(
     padding: const EdgeInsets.all(16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: purple, size: 22),
-        const SizedBox(height: 14),
         Text(
           value,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontFamily: 'Lora',
+            fontSize: 28,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 5),
-        Text(label, style: const TextStyle(fontSize: 10, color: muted)),
+        Text(label, style: const TextStyle(fontSize: 11, color: muted)),
       ],
     ),
   );
   Widget sectionTitle(String title, VoidCallback viewAll) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      Expanded(
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
       ),
       TextButton(
         onPressed: viewAll,
-        child: const Text('View all →', style: TextStyle(fontSize: 11)),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('View all', style: TextStyle(fontSize: 11)),
+            SizedBox(width: 6),
+            Icon(Icons.arrow_forward, size: 15),
+          ],
+        ),
       ),
     ],
   );
-  Widget courseTile(Json course) => InkWell(
-    borderRadius: BorderRadius.circular(18),
-    onTap: () => openCourse(course['_id']),
-    child: AppCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 108,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: courseColor(course['color']),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(17),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Tag(course['code']),
-                const Icon(
-                  Icons.auto_stories_outlined,
-                  color: purple,
-                  size: 53,
+  Widget courseTile(Json course) => Material(
+    color: sheet,
+    borderRadius: BorderRadius.circular(8),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: () => openCourse(course['_id']),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: line),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 79,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 19,
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  course['category'].toString().toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: muted,
-                    letterSpacing: 1,
-                  ),
+                decoration: BoxDecoration(
+                  color: courseColor(course['color']),
+                  border: const Border(right: BorderSide(color: line)),
                 ),
-                const SizedBox(height: 9),
-                Text(
-                  course['title'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 17,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  course['instructorName'] ?? 'Your classroom',
-                  style: const TextStyle(color: muted, fontSize: 11),
-                ),
-                const SizedBox(height: 15),
-                const Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Open classroom',
-                      style: TextStyle(fontSize: 11, color: purple),
+                      course['code'],
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: ink,
+                      ),
                     ),
-                    Icon(Icons.arrow_forward, size: 17, color: purple),
+                    const SizedBox(height: 22),
+                    Text(
+                      course['code'].toString().replaceAll(
+                        RegExp(r'[^0-9]'),
+                        '',
+                      ),
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontFamily: 'Lora',
+                        fontSize: 29,
+                        color: Color(0xFF65736A),
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(17),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course['category'].toString().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 8,
+                          letterSpacing: .8,
+                          color: muted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        course['title'],
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        course['instructorName'] ?? 'Your classroom',
+                        style: const TextStyle(fontSize: 11, color: muted),
+                      ),
+                      const SizedBox(height: 14),
+                      const Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Open classroom',
+                              style: TextStyle(fontSize: 11, color: accent),
+                            ),
+                          ),
+                          Icon(Icons.arrow_forward, size: 17, color: accent),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     ),
   );
@@ -412,7 +504,10 @@ class _HomeScreenState extends State<HomeScreen> {
     padding: const EdgeInsets.all(22),
     physics: const AlwaysScrollableScrollPhysics(),
     children: [
-      const Heading('My courses', 'A space for every possibility.'),
+      const Heading(
+        'My courses',
+        'Course materials and assignments, organized.',
+      ),
       SegmentedButton<bool>(
         segments: const [
           ButtonSegment(
@@ -485,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               loadCourses();
                             })
                           : null,
-                      child: const Text('← Previous'),
+                      child: const Text('Previous'),
                     ),
                     Text(
                       '$page / ${snap.data!['pages']}',
@@ -498,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               loadCourses();
                             })
                           : null,
-                      child: const Text('Next →'),
+                      child: const Text('Next'),
                     ),
                   ],
                 ),
@@ -582,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         onTap: () => openCourse(assignment['courseId'], initialTab: 1),
         child: AppCard(
           child: Column(
@@ -637,7 +732,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   '${submission!['grade']} / ${assignment['maxPoints']}',
                   style: const TextStyle(
                     fontSize: 23,
-                    color: purple,
+                    color: accent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -687,7 +782,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (a['pinned'] == true)
                           const Icon(
                             Icons.push_pin_outlined,
-                            color: purple,
+                            color: accent,
                             size: 17,
                           ),
                       ],
@@ -717,7 +812,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () => openCourse(a['courseId'], initialTab: 2),
-                      child: const Text('View classroom →'),
+                      child: const Text('View classroom'),
                     ),
                   ],
                 ),
