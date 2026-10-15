@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Eye,
@@ -21,11 +21,19 @@ const emptyValues = { name: "", email: "", password: "", inviteCode: "" };
 export default function AuthPage({ register = false }) {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const registeredEmail =
+    !register && typeof location.state?.registeredEmail === "string"
+      ? location.state.registeredEmail
+      : "";
   const [role, setRole] = useState("student");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [values, setValues] = useState(emptyValues);
+  const [values, setValues] = useState(() => ({
+    ...emptyValues,
+    email: registeredEmail,
+  }));
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [challenge, setChallenge] = useState(null),
@@ -36,8 +44,13 @@ export default function AuthPage({ register = false }) {
       role,
       verificationToken: token,
     });
-    setUser(data.user);
-    navigate("/", { replace: true });
+    setChallenge(null);
+    setProof(null);
+    setValues(emptyValues);
+    navigate("/login", {
+      replace: true,
+      state: { registeredEmail: data.user.email },
+    });
   }
   const errors = validateAuth(values, { register, role });
   const fieldError = (name) =>
@@ -53,7 +66,10 @@ export default function AuthPage({ register = false }) {
         setError("");
       },
       onBlur() {
-        setTouched((current) => ({ ...current, [name]: true }));
+        // Autofocusing a blank login password must not move links on pointerdown.
+        // Edited fields validate as typed; untouched blanks validate on submit.
+        if (values[name].length)
+          setTouched((current) => ({ ...current, [name]: true }));
       },
     };
   }
@@ -86,10 +102,7 @@ export default function AuthPage({ register = false }) {
         }
         return;
       }
-      const { data } = await api.post(
-        `/auth/${register ? "register" : "login"}`,
-        register ? { ...values, role } : values,
-      );
+      const { data } = await api.post("/auth/login", values);
       setUser(data.user);
       navigate("/", { replace: true });
     } catch (e) {
@@ -159,6 +172,11 @@ export default function AuthPage({ register = false }) {
               ? "Create your account to join your classroom."
               : "Sign in to pick up where you left off."}
           </p>
+          {registeredEmail && (
+            <div className="alert alert-success" role="status">
+              Registration successful. Please enter your password to sign in.
+            </div>
+          )}
           {register && (
             <div className="role-picker">
               <button
@@ -240,6 +258,7 @@ export default function AuthPage({ register = false }) {
                   minLength={register ? 8 : 1}
                   maxLength={register ? 72 : 200}
                   autoComplete={register ? "new-password" : "current-password"}
+                  autoFocus={!!registeredEmail}
                   placeholder={
                     register
                       ? "Create a strong password"

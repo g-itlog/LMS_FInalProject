@@ -317,8 +317,8 @@ export function OverviewAnalytics({ stats, analytics }) {
     <section className="analytics-overview" aria-label="Overview analytics">
       <div className="analytics-section-title">
         <div>
-          <span className="eyebrow">AT A GLANCE</span>
-          <h2>Your school in numbers</h2>
+          <span className="eyebrow">ANALYTICS SUMMARY</span>
+          <h2>Institutional Overview</h2>
         </div>
         <Link className="text-link" to="/admin/reports">
           Reports & analytics <ArrowUpRight size={16} />

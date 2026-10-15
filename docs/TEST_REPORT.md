@@ -1,21 +1,33 @@
 # Validation report
 
-Verification date: **16 October 2026 (Asia/Singapore)**. The server, web, and Flutter checks below were rerun for the learning expansion plus SMTP OTP registration and password recovery. Native-testing limitations remain explicit.
+Verification date: **16 October 2026 (Asia/Singapore)**. The latest checks include explicit login after OTP registration on web and student Flutter. Native-testing limitations remain explicit.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| API, startup, provisioning, invitations, analytics, and Vercel adapter tests | **88 passed** | Original workflows plus admin permissions, provisioning, suspension, history protection, publication, audit logs, single-use invitations, report calculations/exports, and Vercel rewrite query normalization |
+| API, startup, provisioning, invitations, analytics, and Vercel adapter tests | **90 passed** | Original workflows plus loopback student-bearer CORS, registration without sessions, explicit password login, admin permissions, provisioning, suspension, history protection, publication, audit logs, single-use invitations, report calculations/exports, and Vercel rewrite query normalization |
 | React production build | **Passed** | Vite compiles deployable assets in client/dist |
 | Vercel configuration check | **Passed locally** | Repository-root config, shared Express function, API-first routing, output directory, 3 MB limit |
 | React lint | **Passed** | Source and test linting; generated Playwright reports are excluded |
 | Web authentication validation unit tests | **5 passed** | Required fields, email rules, registration strength and UTF-8 limits, login compatibility, instructor-code presence |
 | Browser end-to-end tests | **21 passed** | Real Edge workflows for admins, reports/charts/CSV downloads, invitations, students, instructors, validation, publication, grading, uploads, keyboard controls, and phone layouts |
-| Flutter tests | **30 passed** | Existing student/API/rendering tests plus live validation, password rules, mode reset, and narrow-phone large-text checks |
+| Flutter tests | **31 passed** | Existing student/API/rendering tests plus registration returning to login, token non-persistence, live validation, password rules, mode reset, and narrow-phone large-text checks |
 | Flutter analysis | **Passed ? no issues** | Latest student learning/authentication source and tests |
-| Flutter browser build | **Passed for current student source** | JavaScript browser preview; a browser build does not verify Android/iOS plugins |
+| Flutter browser build | **Passed with deployed API default** | Current JavaScript browser build, analysis, and 31 widget/API tests passed. Optional WebAssembly dry run remains incompatible with secure-storage web dependencies; no WebAssembly or Android/iOS build is claimed |
 | Hosted feature deployment | **Requires user deployment** | The expanded web/backend/Flutter source is verified locally; this update has not been pushed or deployed by the assistant. Email verification/recovery additionally requires private SMTP settings and a real inbox delivery check |
 | Android APK/device execution | **Not verified** | Android SDK/emulator/device setup is still required |
 | iOS build/device execution | **Not verified** | Requires macOS, Xcode, and signing |
+
+## Flutter inbox and deadline-extension connection
+
+Plain flutter run previously selected localhost:8000 for browser requests. The running local service returned an older health response and the reported inbox/extension requests returned API endpoint not found. Flutter now defaults on all platforms to https://lmsfinalproject-seven.vercel.app/api; local development remains available through an explicit API_BASE_URL override.
+
+The deployed service's preflight probe also rejected localhost:5174. The updated middleware permits the fixed localhost/127.0.0.1 port 5174 preview origins only for mobile-authentication requests and Authorization-based requests/preflights. It grants no cookie credentials to otherwise unconfigured origins. The new integration case verifies preview login, inbox and extension GETs, mark-all-read shared with student web, unauthenticated denial, blocked web-auth preflights, and absent CORS grants for unrelated origins. Full backend results: 90 passed. Flutter analysis, 31 tests, and JavaScript web compilation passed. This middleware update must be pushed/deployed before hosted preview use; no production deployment was performed. The prior 21 browser workflows passed during registration verification.
+
+## Registration requires explicit login
+
+After OTP verification and successful account creation, students/instructors on web and students in Flutter return to login with the registered email prefilled, a blank password, and a success message. The API creates no registration session or cookie and returns no bearer token. Tests verify unauthenticated dashboard denial, incorrect-password rejection, and successful explicit login. Flutter also ignores a legacy registration token rather than persisting it. Instructor invitations are still consumed atomically on account creation.
+
+The browser suite also verifies opening Forgot password immediately after registration. Focusing an untouched blank password no longer inserts a validation error when leaving the field, which previously moved the recovery link during a click. Edited fields still validate as typed; untouched required fields validate on submit. SMTP inbox delivery and hosted deployment remain separate acceptance checks.
 
 ## Server coverage
 

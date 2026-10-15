@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { submitRegistration, verifyMailbox } from "./helpers/email";
+import {
+  expectRegistrationLogin,
+  submitRegistration,
+  verifyMailbox,
+} from "./helpers/email";
 
 test("registration waits for email proof, validates codes, and never creates an account on an incorrect code", async ({
   page,
@@ -42,8 +46,15 @@ test("registration waits for email proof, validates codes, and never creates an 
     fullPage: true,
   });
   await verifyMailbox(page, email);
-  await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
+  await expectRegistrationLogin(page, email);
   expect(registrations).toBe(1);
+  await page.getByLabel("Password", { exact: true }).fill("Incorrect2026!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("incorrect");
+  await expect(page).toHaveURL(/\/login$/);
+  await page.getByLabel("Password", { exact: true }).fill("Verified2026!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
   expect(
     (await (await page.request.get("/api/auth/me")).json()).user
       .emailVerifiedAt,
@@ -58,11 +69,13 @@ test("forgot password verifies an emailed code before new-password entry, valida
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill("Original2026!");
   await submitRegistration(page);
-  await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
     .getByRole("link", { name: "Forgot password?", exact: true })
     .click();
+  await expect(page).toHaveURL(/\/forgot-password$/);
+  await expect(
+    page.getByRole("heading", { name: "Forgot your password?" }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 320, height: 900 });
   await page.getByLabel("Email address").fill("broken");
   await expect(page.getByText(/Enter a valid email/)).toBeVisible();

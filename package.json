@@ -13,6 +13,7 @@
     "dev": "node server/scripts/dev.js",
     "docs": "npm --prefix server run docs:build",
     "package:source": "npm --prefix server run package:source",
+    "package:mobile": "npm --prefix server run package:mobile",
     "build": "npm run deploy:check && npm --prefix client run build",
     "start": "npm --prefix server start",
     "test": "npm --prefix server test",

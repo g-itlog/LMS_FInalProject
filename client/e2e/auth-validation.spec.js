@@ -86,6 +86,8 @@ test("student registration validates names and password rules live on a phone", 
     ),
   ).toBe(true);
   await submitRegistration(page);
+  await page.getByLabel("Password", { exact: true }).fill("Learning42");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
   expect(attempts).toBe(1);
 });

@@ -89,7 +89,7 @@ Assignments use local time in forms and UTC in API/database storage. Late work i
 
 See [`mobile/README.md`](mobile/README.md). The mobile API rejects instructor login and registration. Student tokens live in platform secure storage; browser JWTs live in HTTP-only cookies. Logout revokes the server session. Password changes revoke other sessions.
 
-For a Flutter browser preview on this PC, leave the API running, open a terminal in `mobile`, and run `flutter run -d chrome` or `flutter run -d edge`. The configured preview port is 5174 and the browser API defaults to `http://localhost:8000/api`. Browser attachments and downloads are supported. Flutter browser preview uses student bearer authentication and the secure-storage web implementation; the React web client continues to use HTTP-only cookies.
+For a Flutter browser preview on this PC, open a terminal in `mobile` and run `flutter run -d chrome` or `flutter run -d edge`. The configured preview UI port is 5174; all Flutter platforms default to `https://lmsfinalproject-seven.vercel.app/api`, so no local server is required. Deploy the latest backend source to enable the fixed loopback preview origins for student bearer access. Browser attachments and downloads are supported. Flutter browser preview uses student bearer authentication and the secure-storage web implementation; the React web client continues to use HTTP-only cookies. To test a local backend deliberately, use an explicit API_BASE_URL override and restart any older backend process after updating source.
 
 ```powershell
 cd mobile

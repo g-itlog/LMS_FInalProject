@@ -1,5 +1,7 @@
 # Knowhere to Grow · Flutter student application
 
+Sending this project to a classmate? Read [START_HERE.md](START_HERE.md). From the repository root, `npm run package:mobile` creates submission/Knowhere-to-Grow-Mobile.zip with the Flutter source and setup guides, excluding private credentials and machine-specific caches.
+
 This is the **student-only** Flutter Android/iOS app, with a browser preview, for the same Express backend used by the React web app. Instructors use the React web dashboard. Student-app authentication endpoints reject instructor accounts before issuing a token.
 
 Implemented: student registration/login, dashboard statistics, enrolled courses and catalog enrollment, material links and authenticated downloads, assignment instructions/deadlines, file and text submissions, grades and instructor feedback, announcements, profile/password updates, and server-revoked logout.
@@ -8,13 +10,15 @@ Also implemented: course **Quizzes** (server grading, attempt limits, closing da
 
 Login and registration validate edited fields as you type. Registration includes a live password checklist and enforces the API's 72-byte UTF-8 limit. Invalid submissions focus the first invalid field; switching between forms clears credentials and validation. Mobile registration remains student-only. Password and account verification happens on submission against the shared API.
 
-For the Vercel deployment, rebuild with `--dart-define=API_BASE_URL=https://YOUR-SITE.vercel.app/api`. The website and API share that deployment; Atlas stores the data and files. Attachments are limited to 3 MB in both clients and the backend. Follow [the deployment walkthrough](../docs/DEPLOYMENT_WALKTHROUGH.md) for the exact hosting settings.
+After email OTP verification and successful registration, the app returns to login with the registered email prefilled, the password cleared, and a success message. No user session or token is saved during registration. The student must enter the password and sign in before the dashboard opens.
+
+By default, `flutter run` uses **https://lmsfinalproject-seven.vercel.app/api** on all platforms. No local backend is required. To use a different deployment or a local backend, override it with `--dart-define=API_BASE_URL=https://YOUR-SITE.vercel.app/api`. The website and API share that deployment; Atlas stores the data and files. Attachments are limited to 3 MB in both clients and the backend. Follow [the deployment walkthrough](../docs/DEPLOYMENT_WALKTHROUGH.md) for the exact hosting settings.
 
 ## Run on this PC now (Chrome or Edge)
 
 The error **“No supported devices connected”** means Flutter found no Android/iOS device for the original mobile-only project. This PC has Flutter and browsers, but the Android SDK is not installed. A browser target is now included so you can run and test the student app immediately.
 
-In one terminal, start the backend from `server` using `npm run server` (or leave the existing backend running). In another terminal, from `mobile`:
+From `mobile`, use the deployed backend:
 
 ```powershell
 flutter pub get
@@ -23,7 +27,9 @@ flutter run -d chrome
 flutter run -d edge
 ```
 
-The installed Flutter SDK reads `web_dev_config.yaml` and uses **http://localhost:5174**. For older Flutter versions that do not read this file, add `--web-port=5174`. The browser app defaults to `http://localhost:8000/api`. This origin is included in the server's local configuration; restart a previously running API after updating `.env`.
+The installed Flutter SDK reads `web_dev_config.yaml` and uses **http://localhost:5174** for its browser UI. For older Flutter versions that do not read this file, add `--web-port=5174`. The API still defaults to the deployed HTTPS address above. The backend permits the fixed localhost/127.0.0.1 port 5174 origins for mobile authentication and student bearer requests, without granting cookie credentials to otherwise unconfigured origins. Deploy the latest backend source before using this preview with Vercel.
+
+For explicit local-backend testing, start the current `server` with `npm run server`, then run `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api`. If new features return **API endpoint not found**, stop and restart that backend from this checkout; an older running API may lack notifications, quizzes, progress, or deadline extensions. Changing Dart defines requires stopping and rerunning Flutter, not just hot reload.
 
 Browser preview supports student registration/login, course enrollment, file-picker submissions, resource downloads, grades, announcements, and profile/logout. Browser downloads use the browser download folder; Android/iOS still use private app documents. Browser token storage uses the secure-storage web implementation and requires localhost or HTTPS. This preview does not verify native Android plugins or produce an APK.
 
@@ -31,15 +37,15 @@ Browser preview supports student registration/login, course enrollment, file-pic
 
 Install Flutter stable (Dart 3.12+), Android SDK/platform tools, and an emulator or connected device. Follow [the official setup](https://docs.flutter.dev/platform-integration/android/setup), including reviewing and accepting SDK licenses yourself. An iOS build requires macOS/Xcode.
 
-Start the backend from `server` with `npm start`, then:
+For the deployed backend:
 
 ```powershell
 flutter pub get
 flutter devices
-flutter run -d YOUR_ANDROID_DEVICE_ID --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+flutter run -d YOUR_ANDROID_DEVICE_ID
 ```
 
-The URL **must include `/api`** and omit a trailing slash. For a physical phone replace `10.0.2.2` with your PC’s LAN IP (same Wi-Fi; allow inbound port 8000). For iOS simulator use `http://127.0.0.1:8000/api` with a local ATS development exception, or use HTTPS. Production must use an HTTPS API; Android cleartext traffic is enabled only in the debug manifest.
+For optional local Android-emulator testing, start the current backend and add `--dart-define=API_BASE_URL=http://10.0.2.2:8000/api`. The URL **must include `/api`** and omit a trailing slash. For a physical phone use your PC's LAN IP (same Wi-Fi; allow inbound port 8000). For iOS simulator use `http://127.0.0.1:8000/api` with a local ATS development exception, or keep the deployed HTTPS default. Android cleartext traffic is enabled only in the debug manifest.
 
 If Android is absent from `flutter devices`, open Android Studio → SDK Manager and install the Android SDK, platform tools, and command-line tools. Run `flutter doctor --android-licenses` and review/accept the licenses. Then either start an emulator from Device Manager or connect an Android phone with USB debugging enabled and authorize the PC. Check `flutter doctor` and `flutter devices` again before running the app.
 

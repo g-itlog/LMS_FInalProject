@@ -2,6 +2,8 @@
 
 Public registration on web and student Flutter requires proof that the user can receive mail at the given address. OTP proves mailbox access, not a person's identity or school affiliation; instructors still need an unused invitation. Forgot password supports all web roles and students only in Flutter.
 
+After registration succeeds, web students/instructors and Flutter students return to login with the normalized registered email prefilled and the password blank. A success message explains the next step. Registration creates no session, cookie, or bearer token; only a separate successful password login grants access. Email and password are not put into URL parameters, and the password is never passed to the login screen.
+
 **Brevo SMTP connection, TLS, and authentication passed locally on 16 October 2026. Actual OTP inbox delivery still needs verification.** Private SMTP credentials are configured in server/.env and are excluded from Git. Vercel requires its own environment variables and redeployment. Login works without SMTP; new public registration/recovery fails clearly rather than bypassing verification.
 
 ## Brevo setup (current provider)
@@ -57,7 +59,7 @@ Add the same **six SMTP variables** under Vercel → Project → Settings → En
 Use disposable accounts and a real mailbox you own:
 
 - [ ] Register on the deployed website. No account/session should exist before code verification.
-- [ ] Receive Verify your email — Knowhere to Grow, including checking spam. Enter the actual code and finish registration.
+- [ ] Receive Verify your email — Knowhere to Grow, including checking spam. Enter the actual code and finish registration. Expect login with the email prefilled and password empty. Confirm an incorrect password fails and the correct password opens the dashboard.
 - [ ] Sign out, select Forgot password?, and receive Reset your password — Knowhere to Grow.
 - [ ] Verify the code, enter a strong new password twice, and save. Confirm the old password fails, the new one works, and other web/mobile sessions are revoked.
 - [ ] Repeat in Flutter using the deployed HTTPS /api base. Instructors/admins stay web-only.

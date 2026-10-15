@@ -67,15 +67,13 @@ before(async () => {
     ["second", "student"],
     ["admin", "admin"],
   ])
-    await database.db
-      .collection("lms_users")
-      .insertOne({
-        name: `Test ${name}`,
-        email: `${name}@learning.test`,
-        role,
-        passwordHash: await bcrypt.hash(password, 4),
-        createdAt: new Date(),
-      });
+    await database.db.collection("lms_users").insertOne({
+      name: `Test ${name}`,
+      email: `${name}@learning.test`,
+      role,
+      passwordHash: await bcrypt.hash(password, 4),
+      createdAt: new Date(),
+    });
   const agents = [];
   for (const name of ["teacher", "other", "student", "second", "admin"]) {
     const agent = request.agent(app);
@@ -453,6 +451,85 @@ test("deadline reminders become overdue, change identity on deadline edits, and 
     await write(admin, "delete", `/admin/announcements/${id}`).expect(200);
   await write(teacher, "delete", `/assignments/${task._id}`).expect(200);
 });
+test("Flutter loopback preview signs in and shares notification and extension routes through student bearer CORS", async () => {
+  for (const origin of ["http://localhost:5174", "http://127.0.0.1:5174"]) {
+    const preflight = await request(app)
+      .options("/api/mobile/auth/login")
+      .set("Origin", origin)
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type")
+      .expect(204);
+    assert.equal(preflight.headers["access-control-allow-origin"], origin);
+    assert.equal(
+      preflight.headers["access-control-allow-credentials"],
+      undefined,
+    );
+    const login = await request(app)
+      .post("/api/mobile/auth/login")
+      .set("Origin", origin)
+      .send({ email: "student@learning.test", password })
+      .expect(200);
+    assert.equal(login.headers["access-control-allow-origin"], origin);
+    const token = login.body.token;
+    for (const path of [
+      "/api/notifications?page=1",
+      `/api/assignments/${assignment._id}/extensions?page=1&status=all`,
+    ]) {
+      const options = await request(app)
+        .options(path)
+        .set("Origin", origin)
+        .set("Access-Control-Request-Method", "GET")
+        .set("Access-Control-Request-Headers", "Content-Type, Authorization")
+        .expect(204);
+      assert.equal(options.headers["access-control-allow-origin"], origin);
+      const result = await request(app)
+        .get(path)
+        .set("Origin", origin)
+        .set("Authorization", `Bearer ${token}`)
+        .expect(200);
+      assert.equal(result.headers["access-control-allow-origin"], origin);
+      assert.equal(
+        result.headers["access-control-allow-credentials"],
+        undefined,
+      );
+      assert.ok(Array.isArray(result.body.items));
+    }
+    await request(app)
+      .post("/api/notifications/read-all")
+      .set("Origin", origin)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    assert.equal((await student.get("/api/notifications")).body.unread, 0);
+    const noToken = await request(app)
+      .get("/api/notifications")
+      .set("Origin", origin)
+      .expect(401);
+    assert.equal(noToken.headers["access-control-allow-origin"], undefined);
+    const webPreflight = await request(app)
+      .options("/api/auth/login")
+      .set("Origin", origin)
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type")
+      .expect(401);
+    assert.equal(
+      webPreflight.headers["access-control-allow-origin"],
+      undefined,
+    );
+    for (const otherOrigin of [
+      "https://untrusted.example",
+      "http://localhost:5175",
+      "http://localhost.evil.example:5174",
+    ]) {
+      const blocked = await request(app)
+        .get("/api/notifications")
+        .set("Origin", otherOrigin)
+        .set("Authorization", `Bearer ${token}`)
+        .expect(200);
+      assert.equal(blocked.headers["access-control-allow-origin"], undefined);
+    }
+  }
+});
+
 test("admin monitors enrollment progress, manages metadata, archives/restores retained learning history and audits", async () => {
   await student.get("/api/admin/enrollments").expect(403);
   await other.get("/api/admin/announcements").expect(403);

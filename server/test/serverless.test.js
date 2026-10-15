@@ -185,10 +185,17 @@ test("the function handles real Atlas-compatible database auth, secure cookies, 
         ),
       })
       .expect(201);
-    assert.match(signup.headers["set-cookie"][0], /HttpOnly/);
-    assert.match(signup.headers["set-cookie"][0], /Secure/);
-    assert.match(signup.headers["set-cookie"][0], /SameSite=Lax/);
-    const cookie = signup.headers["set-cookie"][0].split(";")[0];
+    assert.equal(signup.headers["set-cookie"], undefined);
+    await request(handler).get("/api/dashboard").expect(401);
+    const login = await request(handler)
+      .post("/api/auth/login")
+      .set("Origin", origin)
+      .send({ email: "hosted@example.test", password: "Password2026!" })
+      .expect(200);
+    assert.match(login.headers["set-cookie"][0], /HttpOnly/);
+    assert.match(login.headers["set-cookie"][0], /Secure/);
+    assert.match(login.headers["set-cookie"][0], /SameSite=Lax/);
+    const cookie = login.headers["set-cookie"][0].split(";")[0];
     await request(handler)
       .get("/api/dashboard")
       .set("Cookie", cookie)

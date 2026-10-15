@@ -19,9 +19,7 @@ class ApiError implements Exception {
 class LmsApi extends ChangeNotifier {
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: kIsWeb
-        ? 'http://localhost:8000/api'
-        : 'http://10.0.2.2:8000/api',
+    defaultValue: 'https://lmsfinalproject-seven.vercel.app/api',
   );
   final FlutterSecureStorage storage;
   final http.Client client;
@@ -62,6 +60,8 @@ class LmsApi extends ChangeNotifier {
     if (data['user']['role'] != 'student') {
       throw ApiError('Only students can use the mobile app.');
     }
+    // Account creation does not authenticate or persist a bearer token.
+    if (register) return;
     _token = data['token'];
     await storage.write(key: 'lms_token', value: _token);
     user = Map<String, dynamic>.from(data['user']);

@@ -130,7 +130,12 @@ test("registration proves email ownership before account creation, uses one-time
   }).expect(201);
   assert.ok(result.body.user.emailVerifiedAt);
   assert.equal(result.body.user.passwordHash, undefined);
-  assert.ok(result.headers["set-cookie"]);
+  assert.equal(result.headers["set-cookie"], undefined);
+  assert.equal(result.body.token, undefined);
+  assert.equal(
+    await database.db.collection("lms_sessions").countDocuments(),
+    0,
+  );
   const user = await database.db.collection("lms_users").findOne({ email });
   assert.ok(await bcrypt.compare(password, user.passwordHash));
   await post("/auth/register", {
@@ -243,10 +248,16 @@ test("instructor registration atomically consumes its email proof and invitation
     ).useCount,
     0,
   );
-  await post("/auth/register", {
+  const registration = await post("/auth/register", {
     ...body,
     inviteCode: "FacultyOneTimeCode2026",
   }).expect(201);
+  assert.equal(registration.headers["set-cookie"], undefined);
+  assert.equal(registration.body.token, undefined);
+  assert.equal(
+    await database.db.collection("lms_sessions").countDocuments(),
+    0,
+  );
   assert.equal(
     (
       await database.db
@@ -256,6 +267,40 @@ test("instructor registration atomically consumes its email proof and invitation
     1,
   );
 });
+test("mobile registration creates no token or session and requires a correct password before access", async () => {
+  const email = "mobile-registration@example.test";
+  const proof = await verified(email, "register", true);
+  const registration = await post("/mobile/auth/register", {
+    name: "Mobile Student",
+    email,
+    password,
+    role: "student",
+    verificationToken: proof.verificationToken,
+  }).expect(201);
+  assert.equal(registration.body.token, undefined);
+  assert.equal(registration.headers["set-cookie"], undefined);
+  assert.equal(
+    await database.db.collection("lms_sessions").countDocuments(),
+    0,
+  );
+  await request(app).get("/api/dashboard").expect(401);
+  await post("/mobile/auth/login", {
+    email,
+    password: "WrongPassword2026!",
+  }).expect(401);
+  const login = await post("/mobile/auth/login", { email, password }).expect(
+    200,
+  );
+  assert.ok(login.body.token);
+  await request(app)
+    .get("/api/dashboard")
+    .set("Authorization", `Bearer ${login.body.token}`)
+    .expect(200);
+  await post("/auth/logout", {})
+    .set("Authorization", `Bearer ${login.body.token}`)
+    .expect(200);
+});
+
 test("reset responses do not disclose membership and mobile recovery rejects non-student and suspended accounts", async () => {
   const missing = (await send("unknown@example.test", "reset").expect(200))
     .body;
@@ -363,14 +408,12 @@ test("admin email changes clear verification and invalidate old-email recovery p
     .findOne({ email: "verified@example.test" });
   await release();
   const old = await verified(user.email, "reset");
-  await database.db
-    .collection("lms_users")
-    .insertOne({
-      name: "Mailbox Administrator",
-      email: "mail-admin@example.test",
-      role: "admin",
-      passwordHash: await bcrypt.hash(password, 4),
-    });
+  await database.db.collection("lms_users").insertOne({
+    name: "Mailbox Administrator",
+    email: "mail-admin@example.test",
+    role: "admin",
+    passwordHash: await bcrypt.hash(password, 4),
+  });
   const admin = request.agent(app);
   await admin
     .post("/api/auth/login")

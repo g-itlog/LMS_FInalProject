@@ -34,11 +34,31 @@ export function createApp({ db, bucket, config }) {
   if (config.trustProxy) app.set("trust proxy", 1);
   app.use(helmet());
   app.use(
-    cors({
-      origin(origin, done) {
-        done(null, !origin || config.origins.includes(origin));
-      },
-      credentials: true,
+    cors((req, done) => {
+      const origin = req.headers.origin;
+      const configuredOrigin = !origin || config.origins.includes(origin);
+      // Flutter's local browser preview uses student bearer tokens, not web cookies.
+      // Keep this exception limited to its fixed loopback origin and mobile auth
+      // or Authorization requests; ordinary web access still uses configured origins.
+      const previewOrigin = [
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+      ].includes(origin);
+      const requestsBearer =
+        req.method === "OPTIONS" &&
+        (req.headers["access-control-request-headers"] || "")
+          .toLowerCase()
+          .split(",")
+          .some((header) => header.trim() === "authorization");
+      const mobilePreview =
+        previewOrigin &&
+        (req.path.startsWith("/api/mobile/auth/") ||
+          req.headers.authorization?.startsWith("Bearer ") ||
+          requestsBearer);
+      done(null, {
+        origin: configuredOrigin || mobilePreview,
+        credentials: configuredOrigin,
+      });
     }),
   );
   app.use(express.json({ limit: "100kb" }));
@@ -130,10 +150,11 @@ export function createApp({ db, bucket, config }) {
       await session.endSession();
     }
     user._id = result.insertedId;
-    const token = await startSession(db, res, user, config, mobile);
-    res
-      .status(201)
-      .json({ user: publicUser(user), ...(mobile ? { token } : {}) });
+    // Verification creates the account; only an explicit login starts a session.
+    res.status(201).json({
+      user: publicUser(user),
+      message: "Registration successful. Please sign in with your password.",
+    });
   }
   async function login(req, res) {
     const data = validate(schemas.login, req.body);

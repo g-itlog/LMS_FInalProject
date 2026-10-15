@@ -11,6 +11,7 @@
     "dev:all": "node scripts/dev.js",
     "docs:build": "node scripts/build-docs.js && node scripts/build-presentation.js",
     "package:source": "node scripts/package-source.js",
+    "package:mobile": "node scripts/package-source.js --mobile",
     "start": "node index.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "seed": "node scripts/seed.js",

@@ -113,7 +113,7 @@ Use HTTPS and include `/api`. The native app uses student bearer sessions agains
 | Browser write returns 403 | Set `CLIENT_ORIGINS` to the exact website origin and redeploy |
 | An upload exceeds the limit | Maximum attachment size is 3 MB; resource URLs can point to larger external materials |
 | Website still shows the previous version | Confirm the latest commit was pushed and selected in the deployment |
-| Flutter still tries localhost | Stop the app and rebuild with the HTTPS production API_BASE_URL |
+| Flutter inbox or extensions show API endpoint not found | The latest Flutter source defaults to the deployed HTTPS API. Stop and rerun Flutter after updating. Remove an old local API_BASE_URL override, or restart the current local backend if testing it intentionally. Push/deploy the latest backend for its notification, extension, and loopback-preview CORS routes |
 
 ## References
 

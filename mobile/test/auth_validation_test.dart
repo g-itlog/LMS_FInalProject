@@ -156,6 +156,25 @@ void main() {
               200,
             );
           }
+          if (request.url.path.endsWith('/login')) {
+            if (jsonDecode(request.body)['password'] != 'Learning42') {
+              return http.Response(
+                '{"message":"Email or password is incorrect."}',
+                401,
+              );
+            }
+            return http.Response(
+              jsonEncode({
+                'user': {
+                  '_id': 'student1',
+                  'name': 'Ana Cruz',
+                  'role': 'student',
+                },
+                'token': 'login-token',
+              }),
+              200,
+            );
+          }
           return http.Response(
             jsonEncode({
               'user': {
@@ -163,7 +182,6 @@ void main() {
                 'name': 'Ana Cruz',
                 'role': 'student',
               },
-              'token': 'test-token',
             }),
             201,
           );
@@ -213,7 +231,26 @@ void main() {
       expect(calls.last.url.path, '/api/mobile/auth/register');
       expect(jsonDecode(calls.last.body)['role'], 'student');
       expect(jsonDecode(calls.last.body)['verificationToken'], 'test-proof');
+      expect(api.user, isNull);
+      expect(await api.storage.read(key: 'lms_token'), isNull);
+      expect(find.textContaining('Registration successful'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(input('Email address')).controller!.text,
+        'ana@example.edu',
+      );
+      expect(
+        tester.widget<TextField>(input('Password')).controller!.text,
+        isEmpty,
+      );
+      expect(tester.widget<TextField>(input('Password')).obscureText, isTrue);
+      await enter(tester, 'Password', 'Incorrect42');
+      await tapText(tester, 'Sign in');
+      expect(api.user, isNull);
+      expect(find.text('Email or password is incorrect.'), findsOneWidget);
+      await enter(tester, 'Password', 'Learning42');
+      await tapText(tester, 'Sign in');
       expect(api.user!['role'], 'student');
+      expect(await api.storage.read(key: 'lms_token'), 'login-token');
       expect(tester.takeException(), isNull);
     },
   );

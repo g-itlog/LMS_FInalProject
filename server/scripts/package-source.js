@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const mobileOnly = process.argv.includes("--mobile");
 const excluded = new Set([
   "node_modules",
   ".git",
@@ -19,6 +20,16 @@ const excluded = new Set([
   "coverage",
   "submission",
   "ephemeral",
+  ".pub-cache",
+  ".pub",
+  ".symlinks",
+  "Pods",
+  "DerivedData",
+  "xcuserdata",
+  ".vscode",
+  ".widget_preview",
+  ".cxx",
+  "dgph",
 ]);
 const crcTable = Array.from({ length: 256 }, (_, n) => {
   for (let k = 0; k < 8; k++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1;
@@ -41,10 +52,18 @@ async function walk(directory) {
     if (
       (item.name.startsWith(".env") && item.name !== ".env.example") ||
       item.name.includes("credentials") ||
-      ["local.properties", ".flutter-plugins-dependencies"].includes(
+      [
+        "local.properties",
+        "key.properties",
+        ".flutter-plugins-dependencies",
+        ".flutter-plugins",
+        "Generated.xcconfig",
+        "flutter_export_environment.sh",
+      ].includes(item.name) ||
+      item.name.startsWith("GeneratedPluginRegistrant.") ||
+      /\.(log|jks|keystore|apk|aab|iml|pem|key|p12|mobileprovision)$/.test(
         item.name,
-      ) ||
-      /\.(log|jks|keystore|apk|aab)$/.test(item.name)
+      )
     )
       continue;
     entries.push({
@@ -53,7 +72,22 @@ async function walk(directory) {
     });
   }
 }
-await walk(root);
+if (mobileOnly) {
+  await walk(path.join(root, "mobile"));
+  for (const document of [
+    "DEPLOYMENT_WALKTHROUGH.md",
+    "DEADLINE_EXTENSIONS.md",
+    "EMAIL_SETUP.md",
+    "FEATURE_EXPANSION.md",
+  ]) {
+    entries.push({
+      name: `docs/${document}`,
+      data: await fs.readFile(path.join(root, "docs", document)),
+    });
+  }
+} else {
+  await walk(root);
+}
 const local = [],
   central = [];
 let offset = 0;
@@ -93,9 +127,14 @@ end.writeUInt32LE(index.length, 12);
 end.writeUInt32LE(offset, 16);
 await fs.mkdir(path.join(root, "submission"), { recursive: true });
 await fs.writeFile(
-  path.join(root, "submission/Knowhere-to-Grow-Source.zip"),
+  path.join(
+    root,
+    mobileOnly
+      ? "submission/Knowhere-to-Grow-Mobile.zip"
+      : "submission/Knowhere-to-Grow-Source.zip",
+  ),
   Buffer.concat([...local, index, end]),
 );
 console.log(
-  `Packaged ${entries.length} source/documentation files. Credentials, dependencies, and runtime caches excluded.`,
+  `Packaged ${entries.length} ${mobileOnly ? "Flutter and setup" : "source/documentation"} files. Credentials, dependencies, and runtime caches excluded.`,
 );

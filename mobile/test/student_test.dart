@@ -42,6 +42,34 @@ void main() {
       api.dispose();
     },
   );
+  test(
+    'registration ignores legacy response tokens and leaves the student signed out',
+    () async {
+      final api = LmsApi(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'user': {'role': 'student'},
+              'token': 'legacy-registration-token',
+            }),
+            201,
+          ),
+        ),
+      );
+      addTearDown(api.dispose);
+      var notifications = 0;
+      api.addListener(() => notifications++);
+      await api.authenticate({
+        'email': 'new@example.test',
+        'password': 'Password2026!',
+      }, register: true);
+      expect(api.user, isNull);
+      expect(api.headers, isEmpty);
+      expect(await api.storage.read(key: 'lms_token'), isNull);
+      expect(notifications, 0);
+    },
+  );
+
   test('instructor response is rejected without storing a token', () async {
     final api = LmsApi(
       client: MockClient(

@@ -27,7 +27,7 @@ For each failed test, record: account role, screen URL, exact action, expected r
 ## 3. Single-use instructor invitations
 
 - [ ] In **Invitation codes**, select **Create invitation**, enter a label such as `QA Instructor 1`, leave the custom code blank, and save. Expect a new active invitation with a generated 24-character code.
-- [ ] Copy it. In a separate signed-out browser/profile, open Register, choose **I'm an instructor**, and register your new QA instructor with that code. Expect successful registration and the instructor dashboard.
+- [ ] Copy it. In a separate signed-out browser/profile, open Register, choose **I'm an instructor**, and register your new QA instructor with that code after email OTP verification. Expect a success message on login with the registered email prefilled and password empty. Enter the correct password to open the instructor dashboard; an incorrect password must leave the user signed out.
 - [ ] Refresh the admin invitation page. Expect the invitation to disappear from **Unused invitations**.
 - [ ] Select **Used history**. Expect a used receipt with no visible code, copy button, edit button, or reactivation button.
 - [ ] Try registering another instructor with a different unused email and the consumed code. Expect rejection and no new instructor account. An already-registered email is rejected as a duplicate independently of code validity.
@@ -41,7 +41,7 @@ The environment invitation is imported once into this list. Restarting or redepl
 
 ## 4. Student registration and authentication
 
-- [ ] Register QA Student 1 using the student option. Expect successful registration without an instructor invitation and a student dashboard.
+- [ ] Register QA Student 1 using the student option and email OTP. Expect login with the email prefilled and password empty, without an instructor invitation. Confirm protected pages are unavailable until the student enters the correct password and signs in.
 - [ ] Register QA Student 2 in another session for privacy/publication checks. A fresh account should have no enrolled courses until it joins one.
 - [ ] While editing registration fields, try a blank/one-character name, malformed email, and weak password. Expect relevant inline feedback and blocked invalid submission. Correcting a field should clear its error.
 - [ ] Check the password show/hide control on Login and Register. Expect one visible toggle per password field, with masking restored when hidden.

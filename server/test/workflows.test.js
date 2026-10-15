@@ -87,7 +87,14 @@ test("student registration hashes passwords and returns no credentials", async (
   assert.equal(r.body.user.role, "student");
   assert.equal(r.body.user.passwordHash, undefined);
   assert.equal(r.body.token, undefined);
-  assert.match(r.headers["set-cookie"][0], /HttpOnly/);
+  assert.equal(r.headers["set-cookie"], undefined);
+  await student.get("/api/dashboard").expect(401);
+  await post(student, "/api/auth/login")
+    .send({ email: "student@example.test", password: "Incorrect2026!" })
+    .expect(401);
+  await post(student, "/api/auth/login")
+    .send({ email: "student@example.test", password })
+    .expect(200);
   const stored = await database.db
     .collection("lms_users")
     .findOne({ email: "student@example.test" });
@@ -143,6 +150,14 @@ test("instructor registration requires a private invitation", async () => {
       verificationToken: await proof("stranger@example.test"),
     })
     .expect(201);
+  for (const [agent, email] of [
+    [teacher, "teacher@example.test"],
+    [otherTeacher, "other@example.test"],
+    [stranger, "stranger@example.test"],
+  ]) {
+    await agent.get("/api/dashboard").expect(401);
+    await post(agent, "/api/auth/login").send({ email, password }).expect(200);
+  }
 });
 test("student cannot create courses; instructor can", async () => {
   await post(student, "/api/courses").send(course).expect(403);

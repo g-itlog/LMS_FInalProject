@@ -470,6 +470,11 @@ test("admin manages single-use invitations and successful signup permanently con
       .getByLabel("Instructor invitation code")
       .fill("BrowserFacultyReplacement2026");
     await submit(teacher, 201);
+    await teacher.getByLabel("Password", { exact: true }).fill("Wrong2026!");
+    await teacher.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(teacher.getByRole("alert")).toContainText("incorrect");
+    await teacher.getByLabel("Password", { exact: true }).fill("Password2026!");
+    await teacher.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(
       teacher.getByRole("heading", { name: /Hello,/ }),
     ).toBeVisible();

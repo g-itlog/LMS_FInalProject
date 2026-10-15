@@ -21,7 +21,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final emailFocus = FocusNode();
   final passwordFocus = FocusNode();
   bool register = false, busy = false, show = false;
-  String? error;
+  String? error, success;
   @override
   void dispose() {
     name.dispose();
@@ -71,6 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         );
         if (verificationToken == null) return;
+        if (!mounted) return;
       }
       await widget.api.authenticate({
         'name': name.text.trim(),
@@ -78,6 +79,22 @@ class _AuthScreenState extends State<AuthScreen> {
         'password': password.text,
         'verificationToken': ?verificationToken,
       }, register: register);
+      if (register && mounted) {
+        final registeredEmail = email.text.trim().toLowerCase();
+        form.currentState?.reset();
+        name.clear();
+        password.clear();
+        email.text = registeredEmail;
+        setState(() {
+          register = false;
+          show = false;
+          success =
+              'Registration successful. Please enter your password to sign in.';
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) passwordFocus.requestFocus();
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
     } finally {
@@ -97,6 +114,7 @@ class _AuthScreenState extends State<AuthScreen> {
       register = !register;
       error = null;
       show = false;
+      success = null;
     });
   }
 
@@ -177,6 +195,19 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
+                  if (success != null) ...[
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        success!,
+                        style: const TextStyle(
+                          color: Color(0xFF37634D),
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 17),
+                  ],
                   if (register) ...[
                     TextFormField(
                       key: const ValueKey('auth-name'),

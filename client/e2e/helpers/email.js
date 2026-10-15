@@ -34,4 +34,17 @@ export async function submitRegistration(page, status = 201) {
   ]);
   if (first === "otp") await verifyMailbox(page, email.toLowerCase());
   expect((await response).status()).toBe(status);
+  if (status === 201) await expectRegistrationLogin(page, email.toLowerCase());
+}
+
+export async function expectRegistrationLogin(page, email) {
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("status")).toContainText(
+    "Registration successful",
+  );
+  await expect(page.getByLabel("Email address", { exact: true })).toHaveValue(
+    email,
+  );
+  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
+  expect((await page.request.get("/api/auth/me")).status()).toBe(401);
 }
