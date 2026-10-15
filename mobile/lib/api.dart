@@ -129,8 +129,8 @@ class LmsApi extends ChangeNotifier {
     String text,
     PlatformFile? file,
   ) async {
-    if (file != null && file.size > 20 * 1024 * 1024) {
-      throw ApiError('Maximum attachment size is 20 MB.');
+    if (file != null && file.size > 3 * 1024 * 1024) {
+      throw ApiError('Maximum attachment size is 3 MB.');
     }
     try {
       final request = http.MultipartRequest(

@@ -25,7 +25,7 @@ The professor’s list offered Library Management System as an example. This imp
 | Announcements CRUD | Course notices, optional pinning, enrolled-student visibility | API tests 10, 16 |
 | Search | Course title/code/category; assignment, grade, and announcement search | API test 7; `ActivityPage.jsx` |
 | Pagination | API course pagination, web activity pagination, mobile course pagination | `courses.js`, `Courses.jsx`, `ActivityPage.jsx`, `home_screen.dart` |
-| Flutter student app | Student auth, dashboard, courses, materials, submissions, grades, notices, profile/logout; browser preview for local testing | `mobile/lib`; 13 Flutter tests and successful web build |
+| Flutter student app | Student auth, dashboard, courses, materials, submissions, grades, notices, profile/logout; browser preview for local testing | `mobile/lib`; 15 Flutter tests and successful web build |
 | Mobile shares backend | Bearer tokens sent to same API; student role enforced at login and API auth | API test 14; Flutter API tests; live Atlas read/write-session verification |
 | Documentation | Chapter 1 with sections 1.1–1.5, flowchart, source/system screenshots, presentation, setup/test documentation | `docs` |
 
@@ -41,4 +41,4 @@ The professor’s list offered Library Management System as an example. This imp
 
 ## Remaining platform verification
 
-Flutter source analysis, 13 automated tests, and the JavaScript web build pass. The student app can run in Chrome/Edge on port 5174 for local testing. Android bundle compilation was attempted and stopped because the machine does not have an Android SDK. No APK, emulator run, physical-device file-picker/download run, or iOS build is claimed. Complete Android SDK setup and configure `API_BASE_URL` for the target phone before the mobile demonstration.
+Flutter source analysis, 15 automated tests, and the JavaScript web build pass. The student app can run in Chrome/Edge on port 5174 for local testing. Android bundle compilation was attempted and stopped because the machine does not have an Android SDK. No APK, emulator run, physical-device file-picker/download run, or iOS build is claimed. Complete Android SDK setup and configure `API_BASE_URL` for the target phone before the mobile demonstration.

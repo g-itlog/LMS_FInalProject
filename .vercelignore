@@ -1,0 +1,14 @@
+mobile/
+docs/
+backup/
+submission/
+.npm-cache/
+.tooling/
+server/test/
+client/e2e/
+client/test-results/
+client/playwright-report/
+**/.env
+**/.env.*
+**/.local-credentials.txt
+**/*.log

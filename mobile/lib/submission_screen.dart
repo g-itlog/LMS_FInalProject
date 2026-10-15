@@ -56,8 +56,8 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         ],
       );
       if (result != null && mounted) {
-        if (result.files.single.size > 20 * 1024 * 1024) {
-          throw ApiError('Maximum file size is 20 MB.');
+        if (result.files.single.size > 3 * 1024 * 1024) {
+          throw ApiError('Maximum file size is 3 MB.');
         }
         setState(() => file = result.files.single);
       }
@@ -292,7 +292,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                 ),
               const SizedBox(height: 9),
               const Text(
-                'Maximum 20 MB. PDF, text, Office, ZIP, images, or MP4. Existing attachment is kept unless replaced.',
+                'Maximum 3 MB. PDF, text, Office, ZIP, images, or MP4. Existing attachment is kept unless replaced.',
                 style: TextStyle(color: muted, fontSize: 10, height: 1.7),
               ),
             ] else if (s?['grade'] == null)

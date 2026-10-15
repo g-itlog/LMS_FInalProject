@@ -8,7 +8,7 @@ Suggested duration: 10–12 minutes. Use the private local credentials file; do 
 4. **Student workflow (2 minutes).** Register/sign in, join the published course, open its resources, and submit text plus an attachment. Show upcoming work and announcements. Use Flutter on a real configured emulator/device after SDK setup.
 5. **Feedback loop (1 minute).** Review the exact submission as its instructor. Save a score and constructive feedback. Refresh the student app to show the same grade.
 6. **Security and testing (1 minute).** Show role protection, session revocation, validation, and test results. Explain bcrypt hashing rather than reversible password encryption. Explain ownership and enrollment checks beyond simply hiding buttons.
-7. **Scope and limitations (1 minute).** Self-enrollment, maximum 20 MB files, no offline submissions or password-reset email. Be explicit about Android/iOS device verification status.
+7. **Scope and limitations (1 minute).** Self-enrollment, maximum 3 MB files, no offline submissions or password-reset email. Be explicit about Android/iOS device verification status.
 
 ## Likely defense questions
 

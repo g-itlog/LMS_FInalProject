@@ -4,8 +4,9 @@ Verification date: **15 October 2026 (Asia/Singapore)**.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| API and startup tests | **24 passed** | 20 API/catalog tests against isolated MongoDB plus four local service detection and port-conflict checks |
+| API, startup, and Vercel adapter tests | **30 passed** | Existing API/catalog/startup checks plus serverless initialization/reuse/retry, secure production-cookie auth, origin checks, and a 3 MB upload/download boundary |
 | React production build | **Passed** | Vite compiles deployable assets in `client/dist` |
+| Vercel configuration check | **Passed locally** | Repository-root config, API-first routing, shared function entry, output directory, and attachment limit; hosted deployment still requires a live smoke test |
 | React lint | **Passed** | ESLint and React Hooks checks |
 | Browser end-to-end tests | **5 passed** | Microsoft Edge; student/instructor workflows, catalog enrollment/download, keyboard navigation, and six workspace pages at 320px, 390px, 768px, and 1280px |
 | Flutter analysis | **Passed — no issues** | Dart source and test analysis |
@@ -42,6 +43,8 @@ Three additional catalog tests verify all eight added courses through student be
 
 Four startup tests verify recognition of a healthy LMS API and Vite frontend, rejection of an unrelated service on an occupied port, and detection of an available port. Manual runtime checks confirmed that repeated root/client development commands reuse the running LMS without starting duplicate processes. The updated API also connected to Atlas and reported the `classroom_lms` database through its startup log and health endpoint.
 
+Five Vercel adapter tests verify configured/platform origins, shared cold/warm initialization, retry after failed initialization, database cleanup on app initialization failure, and real MongoDB-backed production-cookie registration, protected reads, rejected foreign-origin writes, logout, and revocation. A further workflow test accepts and downloads an attachment of exactly 3 MB, rejects oversized instructor/student uploads, and confirms rejected uploads leave no stored file.
+
 ## Browser test coverage
 
 The student test signs in, navigates courses/materials, submits an assignment, views a grade, switches to phone dimensions, checks horizontal overflow, opens/closes navigation, updates a profile, and signs out. Browser JavaScript errors are collected and asserted absent.
@@ -50,7 +53,7 @@ The instructor test signs in, reviews and grades that student submission, create
 
 The catalog test verifies both pages of the 12-course catalog, searches for Python, joins the course, downloads its actual TXT worksheet, submits its assignment, and checks the catalog at phone width. The live Atlas catalog was also checked: all eight additions are published, all worksheet downloads succeed, and all pre-existing records were compared and confirmed unchanged.
 
-Two responsive workspace tests cover both roles across overview, courses, assignments, grades, announcements, and profile at four widths. They verify bundled font loading, the closed drawer's inert state, focus on opening, Escape dismissal with focus restoration, and the student's next-assignment action. The narrow assignment and grade views use labeled cards rather than a table that requires horizontal scrolling.
+Two responsive workspace tests cover both roles across overview, courses, assignments, grades, announcements, and profile at four widths. They verify bundled font loading, the closed drawer's inert state, focus on opening, Escape dismissal with focus restoration, and the student's next-assignment action. The narrow assignment and grade views use labeled cards rather than a table that requires horizontal scrolling. All five browser tests run through the shared serverless adapter against an isolated MongoDB database; the student workflow also checks the 3 MB validation before submitting work normally.
 
 ## Flutter test coverage
 

@@ -4,6 +4,7 @@ import request from "supertest";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { createApp } from "../src/app.js";
 import { connectDatabase } from "../src/database.js";
+import { MAX_ATTACHMENT_BYTES } from "../src/limits.js";
 
 let mongo,
   database,
@@ -183,6 +184,45 @@ test("materials support upload, edit, authenticated download, and URL validation
     .attach("file", Buffer.from("not a PDF"), "bad.pdf")
     .expect(400);
 });
+test("3 MB attachment boundary works and larger uploads are rejected without stored files", async () => {
+  const count = await database.db
+    .collection("lms_files.files")
+    .countDocuments();
+  const uploaded = await post(teacher, `/api/courses/${courseId}/materials`)
+    .field("title", "Boundary-size reading")
+    .attach("file", Buffer.alloc(MAX_ATTACHMENT_BYTES, 65), "boundary.txt")
+    .expect(201);
+  const download = await student
+    .get(`/api/files/${uploaded.body.file.id}`)
+    .expect(200);
+  assert.equal(
+    Number(download.headers["content-length"]),
+    MAX_ATTACHMENT_BYTES,
+  );
+  for (const [agent, url, field] of [
+    [teacher, `/api/courses/${courseId}/materials`, "title"],
+    [student, `/api/assignments/${assignmentId}/submit`, "text"],
+  ]) {
+    const rejected = await post(agent, url)
+      .field(field, "Oversized attachment")
+      .attach(
+        "file",
+        Buffer.alloc(MAX_ATTACHMENT_BYTES + 1, 65),
+        "oversized.txt",
+      )
+      .expect(413);
+    assert.match(rejected.body.message, /3 MB/);
+  }
+  await teacher
+    .delete(`/api/materials/${uploaded.body._id}`)
+    .set("Origin", origin)
+    .expect(200);
+  assert.equal(
+    await database.db.collection("lms_files.files").countDocuments(),
+    count,
+  );
+});
+
 test("announcements support create, edit, and delete with ownership checks", async () => {
   const r = await post(teacher, `/api/courses/${courseId}/announcements`)
     .send({

@@ -119,7 +119,7 @@ void main() {
         '',
         PlatformFile(
           name: 'large.zip',
-          size: 21 * 1024 * 1024,
+          size: 3 * 1024 * 1024 + 1,
           bytes: Uint8List(0),
         ),
       ),

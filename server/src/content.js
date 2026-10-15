@@ -4,10 +4,11 @@ import path from "node:path";
 import { fail, id, role } from "./security.js";
 import { schemas, validate } from "./validation.js";
 import { requireCourse } from "./courses.js";
+import { MAX_ATTACHMENT_BYTES } from "./limits.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 6 },
+  limits: { fileSize: MAX_ATTACHMENT_BYTES, files: 1, fields: 6 },
   fileFilter(req, file, next) {
     const allowed = [
       ".pdf",
@@ -298,11 +299,9 @@ export function contentRoutes(db, bucket) {
         throw error;
       }
       if (req.file && existing?.file) await removeFile(bucket, existing.file);
-      res
-        .status(existing ? 200 : 201)
-        .json({
-          message: existing ? "Submission updated." : "Assignment submitted.",
-        });
+      res.status(existing ? 200 : 201).json({
+        message: existing ? "Submission updated." : "Assignment submitted.",
+      });
     },
   );
   router.get(

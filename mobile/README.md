@@ -4,6 +4,8 @@ This is the **student-only** Flutter Android/iOS app, with a browser preview, fo
 
 Implemented: student registration/login, dashboard statistics, enrolled courses and catalog enrollment, material links and authenticated downloads, assignment instructions/deadlines, file and text submissions, grades and instructor feedback, announcements, profile/password updates, and server-revoked logout.
 
+For the Vercel deployment, rebuild with `--dart-define=API_BASE_URL=https://YOUR-SITE.vercel.app/api`. The website and API share that deployment; Atlas stores the data and files. Attachments are limited to 3 MB in both clients and the backend. Follow [the deployment walkthrough](../docs/DEPLOYMENT_WALKTHROUGH.md) for the exact hosting settings.
+
 ## Run on this PC now (Chrome or Edge)
 
 The error **“No supported devices connected”** means Flutter found no Android/iOS device for the original mobile-only project. This PC has Flutter and browsers, but the Android SDK is not installed. A browser target is now included so you can run and test the student app immediately.
@@ -52,7 +54,7 @@ The generated Android release configuration uses Flutter’s default debug signi
 - JWT tokens are stored using `flutter_secure_storage` (Android Keystore / iOS Keychain; the package's web storage implementation for browser preview). Never print tokens or use real student data on a shared preview PC.
 - Downloads use the same protected `/files/:id` endpoint. They are saved in the app’s private documents folder and opened with an installed viewer using `open_filex`. No shared-storage permission is required. Logging out revokes API access; previously downloaded files remain on the device until app data is cleared or the app is uninstalled.
 - Resource links open in an external browser; only HTTP(S) is accepted.
-- File selection uses the native file picker. Maximum size is 20 MB; text response and/or file is required. The API enforces enrollment, deadlines, file validation, and graded-work locking.
+- File selection uses the native file picker. Maximum size is 3 MB; text response and/or file is required. The API enforces enrollment, deadlines, file validation, and graded-work locking.
 - Data refreshes on tab navigation and on return from course/assignment screens. Pull down to refresh lists. The app requires a network connection and shows retryable error states; it does not queue submissions offline.
 - Password changes rotate the current mobile session and revoke other browser/mobile sessions.
 

@@ -234,8 +234,8 @@ export function Editor({ type, record, courseId, onClose, onSaved }) {
               accept=".pdf,.txt,.csv,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.mp4"
               hint={
                 record?.file
-                  ? `Current: ${record.file.name}. Maximum 20 MB.`
-                  : "PDF, text, Office documents, ZIP, images, or MP4. Maximum 20 MB."
+                  ? `Current: ${record.file.name}. Maximum 3 MB.`
+                  : "PDF, text, Office documents, ZIP, images, or MP4. Maximum 3 MB."
               }
             />
           </>

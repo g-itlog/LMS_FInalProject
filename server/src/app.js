@@ -18,6 +18,7 @@ import {
 import { schemas, validate } from "./validation.js";
 import { courseRoutes } from "./courses.js";
 import { contentRoutes } from "./content.js";
+import { ATTACHMENT_LIMIT_MESSAGE, MAX_ATTACHMENT_BYTES } from "./limits.js";
 
 export function createApp({ db, bucket, config }) {
   const app = express();
@@ -66,6 +67,7 @@ export function createApp({ db, bucket, config }) {
       database: "connected",
       service: "classroom-lms-api",
       databaseName: db.databaseName,
+      maxAttachmentBytes: MAX_ATTACHMENT_BYTES,
     });
   });
   const authLimit = rateLimit({
@@ -201,7 +203,7 @@ export function createApp({ db, bucket, config }) {
         error.code === 11000
           ? "This record already exists. Use a different email or course code."
           : status === 413
-            ? "File is too large. Maximum size is 20 MB."
+            ? ATTACHMENT_LIMIT_MESSAGE
             : status >= 500
               ? "Something went wrong. Please try again."
               : error.message,

@@ -1,4 +1,5 @@
 import axios from "axios";
+export const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
 
 export const api = axios.create({
   baseURL: "/api",
@@ -7,9 +8,21 @@ export const api = axios.create({
 });
 export const message = (error) =>
   error.response?.data?.message ||
+  (error.name === "AttachmentError" ? error.message : null) ||
   (error.code === "ECONNABORTED"
     ? "The request took too long. Please try again."
     : "Unable to connect. Check your connection and try again.");
+api.interceptors.request.use((config) => {
+  if (
+    config.data instanceof FormData &&
+    config.data.get("file")?.size > MAX_ATTACHMENT_BYTES
+  ) {
+    const error = new Error("Maximum file size is 3 MB.");
+    error.name = "AttachmentError";
+    throw error;
+  }
+  return config;
+});
 api.interceptors.response.use(
   (response) => response,
   (error) => {

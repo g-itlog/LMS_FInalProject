@@ -563,7 +563,7 @@ function SubmissionModal({ assignment, submission, onClose, onSaved }) {
             name="file"
             type="file"
             accept=".pdf,.txt,.csv,.docx,.pptx,.xlsx,.zip,.png,.jpg,.jpeg,.mp4"
-            hint="Maximum file size: 20 MB. Existing attachment is kept if you don’t select a new file."
+            hint="Maximum file size: 3 MB. Existing attachment is kept if you don’t select a new file."
           />
         )}
         {locked && submission?.grade == null && (

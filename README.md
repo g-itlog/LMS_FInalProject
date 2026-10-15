@@ -4,7 +4,7 @@ A learning management system for students and instructors, built with **MongoDB,
 
 Source repository: [g-itlog/LMS_FInalProject](https://github.com/g-itlog/LMS_FInalProject). See [GitHub and deployment notes](docs/GITHUB_AND_DEPLOYMENT.md) before importing the project into Vercel, including API routing, private environment variables, and the attachment-size limit.
 
-To run independently of your PC, follow the [Vercel + Render deployment walkthrough](docs/DEPLOYMENT_WALKTHROUGH.md). Once the backend is live, `npm run deploy:configure -- https://YOUR-ACTUAL-BACKEND.onrender.com` creates `client/vercel.json` with the real API route and React Router fallback. Commit that generated file before deploying the Vercel frontend.
+Deploy the website and API together in one Vercel project using the [deployment walkthrough](docs/DEPLOYMENT_WALKTHROUGH.md). Set Root Directory to the repository root (`.`), use the checked-in `vercel.json`, and run `npm run deploy:check` before pushing. MongoDB Atlas stores records and GridFS attachments; the attachment limit is 3 MB.
 
 ## Project folders
 
@@ -12,6 +12,7 @@ To run independently of your PC, follow the [Vercel + Render deployment walkthro
 | --- | --- |
 | `client` | React, React Router, hooks, Axios, Bootstrap, responsive web interface |
 | `server` | Express REST API, MongoDB driver, GridFS uploads, JWT sessions and validation |
+| `api/index.js` | Vercel function bridge to the same Express API |
 | `server/scripts` | Shared development launcher, database seeding, test server, documentation builders, and source packager |
 | `mobile` | Flutter Android/iOS student application |
 | `docs` | Chapter 1, system flowchart, feature mapping, testing evidence, screenshots, presentation |
@@ -74,7 +75,7 @@ Instructors register using the private invitation code, create and publish cours
 
 Deleting a course archives it: content becomes inaccessible while database records remain available for recovery. Deleting an assignment permanently removes its submissions, grades, and attachments. Other deleted resources are removed permanently. There is no recovery UI.
 
-Assignments use local time in forms and UTC in API/database storage. Late work is rejected unless the instructor enables late submissions. Students can replace ungraded work; graded work is locked. Maximum points cannot be reduced below a saved grade. Attachments are limited to 20 MB with an extension allowlist and basic content-signature validation. Downloaded files are always served as attachments and require authorization. File signatures are not malware scanning.
+Assignments use local time in forms and UTC in API/database storage. Late work is rejected unless the instructor enables late submissions. Students can replace ungraded work; graded work is locked. Maximum points cannot be reduced below a saved grade. Attachments are limited to 3 MB with an extension allowlist and basic content-signature validation. Downloaded files are always served as attachments and require authorization. File signatures are not malware scanning.
 
 ## Flutter student app
 

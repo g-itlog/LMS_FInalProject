@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
+import { Buffer } from "node:buffer";
 const screenshots = path.resolve("../docs/screenshots");
 async function login(page, email) {
   await page.goto("/login");
@@ -105,6 +106,18 @@ test("student desktop and phone workflows render without browser errors", async 
   });
   await page.getByRole("tab", { name: /Assignments/ }).click();
   await page.getByRole("button", { name: "Open assignment" }).first().click();
+  await page.getByLabel("Attach your work (optional)").setInputFiles({
+    name: "oversized.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.alloc(3 * 1024 * 1024 + 1, 65),
+  });
+  await page
+    .getByRole("button", { name: "Submit assignment", exact: true })
+    .click();
+  await expect(
+    page.getByText("Maximum file size is 3 MB.", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Attach your work (optional)").setInputFiles([]);
   await page
     .getByLabel("Your response")
     .fill("This is an end-to-end tested student submission.");
