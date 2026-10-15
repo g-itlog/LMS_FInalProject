@@ -406,7 +406,7 @@ export function AdminUsers() {
                     <small>{user.department || "No department"}</small>
                   </div>
                   <div className="admin-user-badges">
-                    <Badge tone={user.role === "admin" ? "purple" : "neutral"}>
+                    <Badge tone={`role-${user.role}`}>
                       {roles[user.role]}
                     </Badge>
                     {statusBadge(user)}

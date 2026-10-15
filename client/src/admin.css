@@ -151,6 +151,18 @@
   display: grid;
   gap: 12px;
 }
+.status-badge.role-student {
+  background-color: #e1eefb;
+  color: #244c7b;
+}
+.status-badge.role-instructor {
+  background-color: #eee6f9;
+  color: #66438b;
+}
+.status-badge.role-admin {
+  background-color: #fff0cc;
+  color: #76540d;
+}
 .admin-user-row {
   display: flex;
   align-items: center;
