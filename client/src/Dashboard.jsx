@@ -70,7 +70,7 @@ export default function Dashboard() {
         ],
       ];
   return (
-    <>
+    <div className="dashboard-page">
       <PageHeading
         eyebrow={instructor ? "TEACHING DESK" : "STUDENT DESK"}
         title={`Hello, ${user.name.split(" ")[0]}.`}
@@ -340,6 +340,6 @@ export default function Dashboard() {
           </section>
         </aside>
       </div>
-    </>
+    </div>
   );
 }

@@ -564,6 +564,106 @@ a:focus-visible {
   color: #5f6e70;
   margin-top: 6px;
 }
+.dashboard-page > .page-heading {
+  align-items: center;
+  gap: 24px;
+}
+.dashboard-page .welcome-banner {
+  min-height: 168px;
+  padding: 24px 28px;
+}
+.dashboard-page .stats-grid {
+  margin-bottom: 28px;
+}
+.dashboard-page .dashboard-columns {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.dashboard-page .dashboard-left,
+.dashboard-page .dashboard-right {
+  min-width: 0;
+  gap: 24px;
+}
+.dashboard-page .dashboard-right {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.dashboard-page .dashboard-courses > .course-card:only-child {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(150px, 34%) minmax(0, 1fr);
+}
+.dashboard-page .dashboard-courses > .course-card:only-child .course-cover {
+  height: auto;
+  min-height: 178px;
+}
+.dashboard-page .dashboard-courses > .course-card:only-child .course-card-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 22px 24px 0;
+}
+.dashboard-page
+  .dashboard-courses
+  > .course-card:only-child
+  .course-card-footer {
+  margin-top: auto;
+}
+.dashboard-page .announcement-widget .quiet-empty.vertical {
+  min-height: 120px;
+  padding: 18px 0;
+}
+.dashboard-page .desk-links {
+  padding: 22px;
+  border: 1px solid #deded4;
+  border-radius: 6px;
+  background: #fffefb;
+}
+.dashboard-page .desk-links > a:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+@media (max-width: 1100px) {
+  .dashboard-page .dashboard-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-page .dashboard-right {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .dashboard-page > .page-heading {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .dashboard-page .welcome-banner {
+    padding: 22px;
+  }
+  .dashboard-page .dashboard-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .dashboard-page .dashboard-courses > .course-card:only-child {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-page .dashboard-courses > .course-card:only-child .course-cover {
+    min-height: 125px;
+  }
+  .dashboard-page
+    .dashboard-courses
+    > .course-card:only-child
+    .course-card-body {
+    padding: 20px 20px 0;
+  }
+}
+@media (max-width: 360px) {
+  .dashboard-page .welcome-banner {
+    padding: 20px 17px;
+  }
+}
 .segmented,
 .role-picker {
   background: #eaece3;

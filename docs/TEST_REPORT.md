@@ -17,6 +17,12 @@ Verification date: **16 October 2026 (Asia/Singapore)**. The latest checks inclu
 | Android APK/device execution | **Not verified** | Android SDK/emulator/device setup is still required |
 | iOS build/device execution | **Not verified** | Requires macOS, Xcode, and signing |
 
+## Dashboard layout verification
+
+The latest dashboard layout uses the full course-column width for a single course, with a horizontal course card on larger screens and a stacked card on phones. The review banner is more compact; the heading action, notice board, and teaching tools use consistent alignment and spacing. Styles are scoped to the learning dashboard.
+
+React lint, production build, and Vercel configuration checks passed. Six targeted Edge workflows passed: the new sparse instructor dashboard case plus all five existing student/instructor workflows. The single-course regression checks 320, 390, 768, 1024, 1440, 1920, and 2160px widths for full-width course cards and no horizontal overflow. Desktop and phone screenshots were inspected. The prior 21-test browser suite result above predates this new layout case; no full 22-test rerun is claimed. The update remains local until pushed/deployed.
+
 ## Flutter inbox and deadline-extension connection
 
 Plain flutter run previously selected localhost:8000 for browser requests. The running local service returned an older health response and the reported inbox/extension requests returned API endpoint not found. Flutter now defaults on all platforms to https://lmsfinalproject-seven.vercel.app/api; local development remains available through an explicit API_BASE_URL override.
