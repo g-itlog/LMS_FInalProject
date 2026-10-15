@@ -39,16 +39,31 @@ const handler = createServerlessHandler({
     INSTRUCTOR_INVITE_CODE: config.inviteCode,
     CLIENT_ORIGINS: config.origins.join(","),
     NODE_ENV: "test",
+    VERCEL: "1",
   },
   connect: async () => database,
   // All browser tests share a loopback IP; production keeps its 180/min limit.
   makeApp: (options) =>
     createApp({
       ...options,
-      config: { ...options.config, apiRequestLimit: 5000 },
+      // The isolated browser fixture uses HTTP; production keeps secure cookies.
+      config: {
+        ...options.config,
+        production: false,
+        trustProxy: false,
+        apiRequestLimit: 5000,
+      },
     }),
 });
-const server = createServer(handler).listen(8001, "127.0.0.1", () =>
+const server = createServer((req, res) => {
+  // Reproduce the catch-all parameter injected by the real Vercel rewrite.
+  const url = new URL(req.url, "http://127.0.0.1:8001");
+  if (url.pathname.startsWith("/api/")) {
+    url.searchParams.set("path", url.pathname.slice(5));
+    req.url = url.pathname + url.search;
+  }
+  return handler(req, res);
+}).listen(8001, "127.0.0.1", () =>
   console.log(
     "Isolated demo ready at http://127.0.0.1:8001 (no Atlas records used)",
   ),

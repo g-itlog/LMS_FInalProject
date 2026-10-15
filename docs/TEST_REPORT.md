@@ -4,7 +4,7 @@ Verification date: **15 October 2026 (Asia/Singapore)**.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| API, startup, provisioning, invitations, and Vercel adapter tests | **48 passed** | Original teaching workflows plus admin role isolation, secure provisioning, suspension/session revocation, history protection, publication, audit logs, and transactional single-use invitation lifecycle/migration/concurrency |
+| API, startup, provisioning, invitations, and Vercel adapter tests | **51 passed** | Original teaching workflows plus admin role isolation, secure provisioning, suspension/session revocation, history protection, publication, audit logs, transactional single-use invitations, and Vercel rewrite query normalization |
 | React production build | **Passed** | Vite compiles deployable assets in client/dist |
 | Vercel configuration check | **Passed locally** | Repository-root config, shared Express function, API-first routing, output directory, 3 MB limit |
 | React lint | **Passed** | Source and test linting; generated Playwright reports are excluded |
@@ -13,13 +13,15 @@ Verification date: **15 October 2026 (Asia/Singapore)**.
 | Flutter tests | **21 passed** | Existing student/API/rendering tests plus live validation, password rules, mode reset, and narrow-phone large-text checks |
 | Flutter analysis | **Passed ? no issues** | Latest student authentication source and tests |
 | Flutter browser build | **Passed for current student source** | JavaScript browser preview; a browser build does not verify Android/iOS plugins |
-| Hosted admin deployment | **Requires user deployment** | Updated source has not been pushed or deployed by the assistant; no production administrator was automatically created |
+| Hosted admin deployment | **Routing fix requires user deployment** | Admin login verified; the reported directory 400 errors were reproduced live. The fix is verified locally and awaits the user's GitHub push/Vercel deployment. A production administrator was provisioned privately at the owner's request |
 | Android APK/device execution | **Not verified** | Android SDK/emulator/device setup is still required |
 | iOS build/device execution | **Not verified** | Requires macOS, Xcode, and signing |
 
 ## Server coverage
 
 The original suites verify registration, bcrypt password hashing, JWT/session revocation, cookie security, CORS/origin checks, role checks, course ownership, enrollment, materials, file validation/download, assignment submissions, grading/feedback, announcements, profile/password updates, course archival, expanded catalog behavior, startup port detection, and Vercel function initialization/retry/reuse. Attachment boundary tests accept exactly 3 MB and reject oversized uploads without persisting them.
+
+Three additional Vercel regression tests cover the catch-all rewrite parameter `path` in both the request URL and the platform's pre-parsed query object. The function adapter removes only this reserved query parameter when running on Vercel; search, pagination, role/status filters, repeated values, and other parameters remain intact. Ordinary Node requests are unchanged. Real database integration checks Users, Courses, Activity, and Invitations with injected routing metadata, verifies filters, and confirms that unknown query/body fields, invalid pagination, unauthenticated access, and non-admin access are still rejected.
 
 Eight admin API tests verify unauthenticated/non-admin denial, blocked public admin signup, blocked administrator mobile login/bearer access, actual overview counts, safe directory responses, student/instructor account creation, strict field validation, protection of administrator accounts, teaching-history role protection, immediate suspension of web/mobile sessions, reactivation, catalog publication, archived-course protection, and attributed activity logs without credentials.
 
@@ -33,7 +35,7 @@ Five admin workflows cover all admin pages and profile at 1440px, 768px, 390px, 
 
 Three authentication workflows verify immediate field errors, error correction, password checklist updates and UTF-8 boundaries, focus on the first invalid field, blocked invalid requests, ordinary credential checking, instructor-code behavior, and clearing fields on login/register navigation.
 
-The five original workflows verify course catalog pagination/search/enrollment/download, student submissions and profile/logout, instructor grading and content CRUD, bundled fonts, mobile drawer keyboard/focus behavior, and the original workspace pages at phone/tablet/desktop widths. The browser test server uses a temporary MongoDB database. Its aggregate IP limit is raised only in that isolated test configuration because all simulated users share loopback; production retains 180 requests/minute and the sign-in limit remains enabled.
+The five original workflows verify course catalog pagination/search/enrollment/download, student submissions and profile/logout, instructor grading and content CRUD, bundled fonts, mobile drawer keyboard/focus behavior, and the original workspace pages at phone/tablet/desktop widths. The browser test server uses a temporary MongoDB database and simulates Vercel's injected `path` query parameter on every API request. The fixture disables secure cookies only for its loopback HTTP transport; production retains secure cookies. Its aggregate IP limit is raised only in that isolated test configuration because all simulated users share loopback; production retains 180 requests/minute and the sign-in limit remains enabled.
 
 ## Flutter coverage
 

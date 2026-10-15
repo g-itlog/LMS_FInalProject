@@ -1,6 +1,22 @@
 import { connectDatabase } from "./database.js";
 import { createApp } from "./app.js";
 
+function removeVercelRouteParameter(req) {
+  // /api/:path* -> /api reserves `path` as routing metadata, not an API filter.
+  // Vercel can expose it in the URL and in its already-parsed query object.
+  const separator = req.url.indexOf("?");
+  if (separator !== -1) {
+    const query = new URLSearchParams(req.url.slice(separator + 1));
+    if (query.has("path")) {
+      query.delete("path");
+      const remaining = query.toString();
+      req.url =
+        req.url.slice(0, separator) + (remaining ? `?${remaining}` : "");
+    }
+  }
+  if (req.query && typeof req.query === "object") delete req.query.path;
+}
+
 export function readRuntimeConfig(env = process.env) {
   const secret = env.JWT_SECRET || env.SECRET_KEY;
   if (!env.MONGO_URL || !secret || secret.length < 32)
@@ -58,6 +74,7 @@ export function createServerlessHandler({
   }
   return async function handler(req, res) {
     try {
+      if (env.VERCEL === "1") removeVercelRouteParameter(req);
       // Concurrent cold-start requests share initialization and the Mongo pool.
       application ||= initialize().catch((error) => {
         application = undefined;

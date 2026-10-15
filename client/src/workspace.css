@@ -600,6 +600,11 @@ a:focus-visible {
   background-color: #fffefb;
 }
 .form-select {
+  appearance: none;
+  background-image: url("/icons/chevron-down.svg");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 16px 16px;
   padding-right: 40px;
 }
 .form-control:focus,

@@ -101,6 +101,7 @@ Use HTTPS and include `/api`. The native app uses student bearer sessions agains
 | --- | --- |
 | `/api/health` returns HTML or 404 | Root Directory must be `.`, the root `vercel.json` and `api/index.js` must be pushed, and output must be `client/dist` |
 | API returns 503 | Check Vercel function logs, Atlas credentials/network access, and required environment variables |
+| Admin lists show `Unrecognized key: "path"` | Push the updated `server/src/runtime.js` and wait for a successful Vercel deployment. The function adapter removes the catch-all route parameter before validating API filters; no environment-variable change is required |
 | Browser write returns 403 | Set `CLIENT_ORIGINS` to the exact website origin and redeploy |
 | An upload exceeds the limit | Maximum attachment size is 3 MB; resource URLs can point to larger external materials |
 | Website still shows the previous version | Confirm the latest commit was pushed and selected in the deployment |
