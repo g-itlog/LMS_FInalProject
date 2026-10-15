@@ -92,57 +92,59 @@ export function invitationService(db, config) {
     });
     await initialization;
   }
-  async function register(user, code) {
+  async function register(user, code, options = {}) {
     await ensure();
+    const execute = async (session) => {
+      const now = new Date();
+      const invitation = await collection.findOneAndUpdate(
+        {
+          codeHash: digest((code || "").trim()),
+          active: true,
+          useCount: 0,
+        },
+        {
+          $set: {
+            active: false,
+            useCount: 1,
+            usedAt: now,
+            lastUsedAt: now,
+            usedBy: user._id,
+            updatedAt: now,
+          },
+          $unset: { code: "" },
+        },
+        { session, returnDocument: "after" },
+      );
+      if (!invitation)
+        fail(
+          403,
+          "A valid instructor invitation code is required. Ask your administrator for an unused, active code.",
+        );
+      const result = await db
+        .collection("lms_users")
+        .insertOne(user, { session });
+      await db.collection("lms_admin_activity").insertOne(
+        {
+          actorId: user._id,
+          actorName: user.name,
+          action: "invitation.used",
+          targetId: invitation._id,
+          targetName: invitation.label,
+          detail:
+            "Instructor registration completed. The single-use invitation was consumed permanently.",
+          createdAt: now,
+        },
+        { session },
+      );
+      return result;
+    };
+    if (options.session) return execute(options.session);
     const session = db.client.startSession();
     try {
-      return await session.withTransaction(
-        async () => {
-          const now = new Date();
-          const invitation = await collection.findOneAndUpdate(
-            {
-              codeHash: digest((code || "").trim()),
-              active: true,
-              useCount: 0,
-            },
-            {
-              $set: {
-                active: false,
-                useCount: 1,
-                usedAt: now,
-                lastUsedAt: now,
-                usedBy: user._id,
-                updatedAt: now,
-              },
-              $unset: { code: "" },
-            },
-            { session, returnDocument: "after" },
-          );
-          if (!invitation)
-            fail(
-              403,
-              "A valid instructor invitation code is required. Ask your administrator for an unused, active code.",
-            );
-          const result = await db
-            .collection("lms_users")
-            .insertOne(user, { session });
-          await db.collection("lms_admin_activity").insertOne(
-            {
-              actorId: user._id,
-              actorName: user.name,
-              action: "invitation.used",
-              targetId: invitation._id,
-              targetName: invitation.label,
-              detail:
-                "Instructor registration completed. The single-use invitation was consumed permanently.",
-              createdAt: now,
-            },
-            { session },
-          );
-          return result;
-        },
-        { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } },
-      );
+      return await session.withTransaction(() => execute(session), {
+        readConcern: { level: "snapshot" },
+        writeConcern: { w: "majority" },
+      });
     } finally {
       await session.endSession();
     }

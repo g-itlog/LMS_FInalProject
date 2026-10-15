@@ -6,6 +6,13 @@ import { createApp } from "../src/app.js";
 import { connectDatabase } from "../src/database.js";
 import { MAX_ATTACHMENT_BYTES } from "../src/limits.js";
 import { invitationFields } from "../src/invitations.js";
+import { registrationProof } from "./helpers/email-proof.js";
+const proof = (email) =>
+  registrationProof(
+    database.db,
+    email,
+    "test-secret-at-least-32-characters-long",
+  );
 
 let mongo,
   database,
@@ -69,7 +76,12 @@ test("unauthenticated access and malformed login are rejected", async () => {
 });
 test("student registration hashes passwords and returns no credentials", async () => {
   const r = await post(student, "/api/auth/register")
-    .send({ name: "Test Student", email: "STUDENT@example.test", password })
+    .send({
+      name: "Test Student",
+      email: "STUDENT@example.test",
+      password,
+      verificationToken: await proof("student@example.test"),
+    })
     .expect(201);
   assert.equal(r.body.user.email, "student@example.test");
   assert.equal(r.body.user.role, "student");
@@ -100,6 +112,7 @@ test("instructor registration requires a private invitation", async () => {
       password,
       role: "instructor",
       inviteCode: "wrong",
+      verificationToken: await proof("teacher@example.test"),
     })
     .expect(403);
   await post(teacher, "/api/auth/register")
@@ -109,6 +122,7 @@ test("instructor registration requires a private invitation", async () => {
       password,
       role: "instructor",
       inviteCode: "private-test-code",
+      verificationToken: await proof("teacher@example.test"),
     })
     .expect(201);
   await post(otherTeacher, "/api/auth/register")
@@ -118,10 +132,16 @@ test("instructor registration requires a private invitation", async () => {
       password,
       role: "instructor",
       inviteCode: "second-private-test-code",
+      verificationToken: await proof("other@example.test"),
     })
     .expect(201);
   await post(stranger, "/api/auth/register")
-    .send({ name: "Other Student", email: "stranger@example.test", password })
+    .send({
+      name: "Other Student",
+      email: "stranger@example.test",
+      password,
+      verificationToken: await proof("stranger@example.test"),
+    })
     .expect(201);
 });
 test("student cannot create courses; instructor can", async () => {

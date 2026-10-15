@@ -9,8 +9,14 @@ The professor’s list offered Library Management System as an example. This imp
 | MongoDB, Express, React, Node | Native MongoDB Node driver, Express REST API, React/Vite client | `server/src`, `client/src` |
 | React Router, hooks, Axios, Bootstrap | Protected router, auth context, state/effect hooks, Axios API client, Bootstrap forms and utilities | `App.jsx`, `auth.jsx`, `hooks.js`, `api.js`, `main.jsx` |
 | Registration, login, logout | Student/instructor public registration; invitation-protected instructor signup; privately provisioned web admins; student-only mobile auth | `workflows.test.js`, `admin.test.js`, `admin-command.test.js` |
+| Email verification and recovery | SMTP email OTP before public account creation; Forgot password → verify code → strong confirmed password; hashed single-use codes, expiration, persistent guessing/resend limits, atomic proof consumption and session revocation | `email-auth.js`, `mail.js`, web/Flutter verification/recovery screens, `EMAIL_SETUP.md`; live sender setup required |
 | Managed instructor invitations | Multiple single-use codes, generation, editing/copying/deactivation before use, atomic consumption on signup, immutable used history, and persistent environment migration | `invitations.js`, `AdminInvitations.jsx`, `invitations.test.js`, `admin.spec.js` |
+| Reports and analytics | Overview activity/role/grading graphs; 7/30/90-day or custom reports; Philippine calendar boundaries; current submission review, weighted scores, course rankings and paginated tables; complete daily/course CSV exports | `analytics.js`, `AdminReports.jsx`, `AnalyticsCharts.jsx`, `analytics.test.js`, `admin.spec.js` |
 | Web administration | School statistics, searchable/paginated user and course directories, account creation/editing, access suspension/reactivation, course publication, and attributed admin activity | `server/src/admin.js`, `client/src/Admin.jsx`, `admin.spec.js`, `ADMIN_GUIDE.md` |
+| Quizzes on both student clients | Single-answer questions, publication/closing date, server grading, atomic attempt limits, quiz revision checks, permitted attempt review, instructor results, archived history | `quizzes.js`, `Learning.jsx`, `learning_screen.dart`, `learning.test.js`, `learning.spec.js`, Flutter `learning_test.dart` |
+| Lecture and course progress | Student-confirmed material completion, submitted assignment/attempted quiz units, best quiz scores, instructor roster, admin aggregate and per-course report | `learning.js`, `analytics.js`, web/Flutter progress views |
+| Shared in-app inbox | Materials, deadlines/overdue work, quiz availability, course and school announcements, audience filtering, versioned read receipts, pagination | `notices.js`, `Notices.jsx`, `inbox_screen.dart`, shared web/mobile API tests |
+| School-wide management | Enrollment monitoring, instructor course/student enrollment details, course metadata editing/archive/restore, audience-targeted announcement CRUD, teaching and learning activity logs | `admin-extension.js`, `AdminLearning.jsx`, `Admin.jsx`, `audit.js` |
 | Live form validation | Inline login/registration feedback, password checklist, UTF-8 password limit, invalid-submission blocking, accessible errors on React and Flutter | `auth-validation.js`, `auth_validation.dart`, auth validation unit/browser/widget tests |
 | Password encryption | Bcrypt salted password hashing, 12 rounds; passwords/hashes excluded from responses | API test 2 |
 | JWT authentication | HS256 JWT, issuer/audience/expiry checks, persisted revocable sessions | `server/src/security.js` |
@@ -23,12 +29,13 @@ The professor’s list offered Library Management System as an example. This imp
 | Materials CRUD and upload | File and/or URL resources, descriptions, replacement, deletion | API test 9; browser test 2 |
 | Student enrollment | Browse published catalog and join; duplicate joining is idempotent | API test 8 |
 | Assignment CRUD | Instructions, deadline, points, late-submission setting | API tests 8, 13, 16 |
+| Deadline extension workflow | Student web/Flutter requests with reason/date; owner inbox and approve/reject/comment; default individual approval or explicit class extension; effective deadlines used throughout submission, filters and reminders; private history and audit events | `extensions.js`, `deadlines.js`, `Extensions.jsx`, `extensions_screen.dart`, extension API/browser/Flutter tests; `DEADLINE_EXTENSIONS.md` |
 | Submission and downloads | Text and/or file, replace before grading, authorized GridFS download | API tests 9, 11, 13 |
 | Grading and written feedback | Instructor review; 0–max points, required feedback, edit grades | API test 12; browser test 2 |
 | Announcements CRUD | Course notices, optional pinning, enrolled-student visibility | API tests 10, 16 |
 | Search | Course title/code/category; assignment, grade, and announcement search | API test 7; `ActivityPage.jsx` |
 | Pagination | API course pagination, web activity pagination, mobile course pagination | `courses.js`, `Courses.jsx`, `ActivityPage.jsx`, `home_screen.dart` |
-| Flutter student app | Student auth, dashboard, courses, materials, submissions, grades, notices, profile/logout; browser preview for local testing | `mobile/lib`; 21 Flutter tests and successful web build |
+| Flutter student app | Student auth, dashboard, courses, materials, submissions, grades, notices, profile/logout; browser preview for local testing | `mobile/lib`; 30 Flutter tests and successful web build |
 | Mobile shares backend | Bearer tokens sent to same API; student role enforced at login and API auth | API test 14; Flutter API tests; live Atlas read/write-session verification |
 | Documentation | Chapter 1 with sections 1.1–1.5, flowchart, source/system screenshots, presentation, setup/test documentation | `docs` |
 
@@ -45,4 +52,4 @@ The professor’s list offered Library Management System as an example. This imp
 
 ## Remaining platform verification
 
-Flutter source analysis, 21 automated tests, and the JavaScript web build pass. The student app can run in Chrome/Edge on port 5174 for local testing. Android bundle compilation was attempted and stopped because the machine does not have an Android SDK. No APK, emulator run, physical-device file-picker/download run, or iOS build is claimed. Complete Android SDK setup and configure `API_BASE_URL` for the target phone before the mobile demonstration.
+Flutter source analysis, 30 automated tests, and the JavaScript web build pass. The student app can run in Chrome/Edge on port 5174 for local testing. Android bundle compilation was attempted and stopped because the machine does not have an Android SDK. No APK, emulator run, physical-device file-picker/download run, or iOS build is claimed. Complete Android SDK setup and configure `API_BASE_URL` for the target phone before the mobile demonstration.

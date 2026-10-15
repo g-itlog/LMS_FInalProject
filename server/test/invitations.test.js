@@ -7,6 +7,7 @@ import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { createApp } from "../src/app.js";
 import { connectDatabase } from "../src/database.js";
 import { invitationFields, invitationService } from "../src/invitations.js";
+import { registrationProof, expectable } from "./helpers/email-proof.js";
 
 const password = "Password2026!";
 const origin = "http://localhost:5173";
@@ -31,15 +32,23 @@ const replacementCode = "FacultyReplacement2026";
 const post = (agent, path) => agent.post(path).set("Origin", origin);
 const patch = (agent, path) => agent.patch(path).set("Origin", origin);
 const signup = (code, email, target = app) =>
-  request(target)
-    .post("/api/auth/register")
-    .send({
-      name: "Invited Instructor",
-      email,
-      password,
-      role: "instructor",
-      inviteCode: code,
-    });
+  expectable(
+    (async () =>
+      request(target)
+        .post("/api/auth/register")
+        .send({
+          name: "Invited Instructor",
+          email,
+          password,
+          role: "instructor",
+          inviteCode: code,
+          verificationToken: await registrationProof(
+            database.db,
+            email,
+            config.secret,
+          ),
+        }))(),
+  );
 const create = async (label, code) =>
   (
     await post(admin, "/api/admin/invitations")
@@ -51,15 +60,13 @@ before(async () => {
   database = await connectDatabase(mongo.getUri(), "lms_invitation_test");
   app = createApp({ ...database, config });
   for (const role of ["admin", "student", "instructor"])
-    await database.db
-      .collection("lms_users")
-      .insertOne({
-        name: `Test ${role}`,
-        email: `${role}@invitation-test.edu`,
-        role,
-        passwordHash: await bcrypt.hash(password, 4),
-        createdAt: new Date(),
-      });
+    await database.db.collection("lms_users").insertOne({
+      name: `Test ${role}`,
+      email: `${role}@invitation-test.edu`,
+      role,
+      passwordHash: await bcrypt.hash(password, 4),
+      createdAt: new Date(),
+    });
   admin = request.agent(app);
   student = request.agent(app);
   instructor = request.agent(app);
@@ -261,13 +268,11 @@ test("two different instructors racing the same code create exactly one account"
   ]);
   assert.deepEqual(results.map((result) => result.status).sort(), [201, 403]);
   assert.equal(
-    await database.db
-      .collection("lms_users")
-      .countDocuments({
-        email: {
-          $in: ["race-one@invitation-test.edu", "race-two@invitation-test.edu"],
-        },
-      }),
+    await database.db.collection("lms_users").countDocuments({
+      email: {
+        $in: ["race-one@invitation-test.edu", "race-two@invitation-test.edu"],
+      },
+    }),
     1,
   );
   const row = await database.db
@@ -313,16 +318,14 @@ test("a failed account insert rolls back code consumption and its audit event", 
 
 test("historically used multi-use records retire permanently on migration", async () => {
   const code = "HistoricalFacultyCode2026";
-  const inserted = await database.db
-    .collection("lms_invitations")
-    .insertOne({
-      ...invitationFields(code),
-      label: "Historical invitation",
-      active: true,
-      useCount: 3,
-      lastUsedAt: new Date(),
-      createdAt: new Date(),
-    });
+  const inserted = await database.db.collection("lms_invitations").insertOne({
+    ...invitationFields(code),
+    label: "Historical invitation",
+    active: true,
+    useCount: 3,
+    lastUsedAt: new Date(),
+    createdAt: new Date(),
+  });
   const restarted = createApp({ ...database, config });
   await signup(code, "historical-reuse@invitation-test.edu", restarted).expect(
     403,

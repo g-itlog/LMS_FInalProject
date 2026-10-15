@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'api.dart';
 import 'widgets.dart';
+import 'extensions_screen.dart';
 
 class SubmissionScreen extends StatefulWidget {
   final LmsApi api;
@@ -23,6 +24,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
   PlatformFile? file;
   bool busy = false;
   String? error;
+  Json? refreshedAssignment;
   @override
   void initState() {
     super.initState();
@@ -112,7 +114,7 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final a = widget.assignment;
+    final a = refreshedAssignment ?? widget.assignment;
     final s = widget.submission;
     final locked =
         s?['grade'] != null ||
@@ -155,6 +157,45 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
               style: const TextStyle(color: muted, fontSize: 12),
             ),
             const SizedBox(height: 24),
+            if (a['hasIndividualExtension'] == true)
+              Text(
+                'Individual extension active. Class deadline: ${date(a['originalDueDate'], time: true)}',
+                style: const TextStyle(color: muted, fontSize: 12),
+              ),
+            OutlinedButton.icon(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ExtensionsScreen(
+                            api: widget.api,
+                            assignmentId: a['_id'],
+                          ),
+                        ),
+                      );
+                      if (!mounted) return;
+                      try {
+                        final data = await widget.api.get(
+                          '/assignments/${a['_id']}/extensions',
+                        );
+                        if (mounted) {
+                          setState(
+                            () => refreshedAssignment =
+                                Map<String, dynamic>.from(data['assignment']),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          notify(context, e.toString(), error: true);
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.event_available_outlined),
+              label: const Text('Request Deadline Extension'),
+            ),
+            const SizedBox(height: 16),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

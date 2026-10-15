@@ -25,6 +25,7 @@ No `ADMIN_PASSWORD` or other new Vercel environment variable is required. Public
 | Area | Capabilities |
 | --- | --- |
 | Overview | Counts of students, instructors, admins, suspended accounts, active/published courses, enrollments, materials, assignments, announcements, and submitted/graded/pending work; recent accounts, submissions, and admin actions |
+| Reports & analytics | Overview graphs, school-wide daily activity, date-range reporting, current grading status, weighted scores, course activity ranking, searchable/paginated course reports, and daily/course CSV downloads |
 | Users | Search by name, email, or department; role/status filters; server-side pagination; account details and record counts; create student/instructor accounts; edit name, email, department, and eligible roles; suspend/reactivate accounts |
 | Courses | Search by title/code/category; active/published/unpublished/archived filters; server-side pagination; instructor details and record counts; course overview with recent assignments, submissions, and announcements; publish/unpublish active courses |
 | Invitation codes | Searchable/paginated unused codes; generate or specify single-use codes; edit labels or replace unused code values; copy codes privately; deactivate/reactivate unused codes; read-only used history |
@@ -33,7 +34,21 @@ No `ADMIN_PASSWORD` or other new Vercel environment variable is required. Public
 
 New instructor accounts created by an administrator do not require the public instructor invitation code. The administrator sets an initial password and shares the sign-in details privately with the account owner; this application does not email credentials.
 
+## Read and export analytics
+
+The Overview page now displays a 30-day activity chart, current account-role distribution, and grading progress across active courses. Move across the activity graph or use its keyboard-accessible date slider to inspect exact values. **View daily data** provides the same values as a table.
+
+Open **Reports & analytics** for the last 7, 30, or 90 days, or apply custom dates spanning at most 366 inclusive calendar days. All boundaries use **Asia/Manila (UTC+8)**, regardless of your device's time zone. A generated timestamp identifies when the report was requested. Use **Refresh** to fetch current records.
+
+New accounts include all roles and account statuses. Enrollment activity counts course memberships, not unique people. Course activity includes published and unpublished courses and excludes archived courses. The course table's enrollment and assignment counts are current totals; submission, review, late, and score figures use the reporting window. Course search filters the table and Course CSV, while charts and summary totals remain school-wide.
+
+Each student has one current submission per assignment. Resubmission moves that record to its latest submission date; reports do not invent an attempt history. Graded and pending figures show the current status of those dated submissions, not the number of grading actions in the window. Weighted score is total earned points divided by total possible points across valid scored submissions. It includes zero grades and excludes ungraded or invalid assessment totals. A dash means no denominator is available. These reports are operational views of current records, not immutable historical snapshots. Current learning participation is reported separately.
+
+**Daily CSV** exports every day in the period, including zero-activity days. **Course CSV** exports every matching active course across all pages, retaining the selected dates and course search. Both include the reporting boundaries and time zone, protect spreadsheet cells against formula execution, and require an administrator cookie session. Neither export contains student names, emails, invitation values, or passwords. Reports and graphs are web-admin features; Flutter remains student-only.
+
 ## Manage instructor invitation codes
+
+For **Enrollments**, **School announcements**, course metadata editing/archive/restore, and current learning-progress metrics, follow [the expanded learning and administration guide](LEARNING_GUIDE.md). Course ownership and grading remain with the instructor. System activity now includes important teaching and student-learning actions as well as administration.
 
 Open **Invitation codes** in the admin sidebar. Choose **Create invitation**, enter a recognizable label, and optionally enter a custom code. Leaving the custom-code field empty generates a secure 24-character code. Custom codes must contain 16–128 letters, numbers, underscores, or hyphens. Multiple codes can be active at the same time; each active code can register exactly one instructor through the ordinary web registration form.
 
@@ -51,7 +66,7 @@ Suspension revokes all existing web/mobile sessions and blocks new sign-ins. Rea
 
 A role change is allowed only before an account has owned courses, enrollments, or submissions, including archived teaching history. Use a separate account for the other role if records already exist. All administrator accounts are protected from directory edits, suspension, and demotion. An administrator can edit their own profile/password through the ordinary profile page.
 
-Unpublishing removes a course from the enrollment catalog while retaining access for students already enrolled. Archived courses remain inspectable by administrators and cannot be republished through the admin workspace. Instructors continue to manage their own learning content and grades. Course detail previews are explicitly limited to the latest 10 assignments/submissions and five announcements; counts cover the complete course history.
+Unpublishing removes a course from the enrollment catalog while retaining access for students already enrolled. Archived courses remain inspectable. Restore a course first to regain existing learning access; it returns as unpublished and can then be published for new enrollments. Instructors continue to manage their own learning content and grades. Course detail previews are explicitly limited to the latest 10 assignments/submissions and five announcements; counts cover the complete course history.
 
 ## Permissions and verification
 
@@ -60,6 +75,12 @@ Unpublishing removes a course from the enrollment catalog while retaining access
 - Administrator login through `/api/mobile/auth/login` is rejected. Administrator JWTs presented as mobile bearer credentials are also rejected.
 - Public signup cannot assign `admin`, and profile updates cannot change roles or suspension status.
 - User-directory responses and activity logs omit password hashes, passwords, JWTs, and invitation codes.
-- Admin commands are recorded in `lms_admin_activity`. Ordinary teaching actions remain governed by the existing course ownership and enrollment rules.
+- Admin commands are recorded in `lms_admin_activity`. Important successful teaching, enrollment, quiz, and completion actions are also attributed in this log; ownership and enrollment rules still apply.
 
 Run `npm --prefix server test` for the API/provisioning/security tests and `npm --prefix client run test:e2e` for real browser admin workflows against an isolated database. Production demo seeding does not create a default administrator. The browser test server's administrator exists only in its temporary test database.
+
+See the [quiz, progress, inbox, and school administration guide](LEARNING_GUIDE.md) for the new workflows, shared student web/Flutter behavior, metric definitions, and acceptance checklist.
+
+Email verification and Forgot password are available on web and student Flutter. Public registration now needs an emailed OTP before creating the account. Configure the six private SMTP variables and perform a real inbox check using [EMAIL_SETUP.md](EMAIL_SETUP.md). Existing accounts remain usable.
+
+Assignment deadline extensions are available on student web and Flutter, with owner review, private comments, individual or explicit whole-class approval, shared effective deadlines, and in-app notices. Follow [DEADLINE_EXTENSIONS.md](DEADLINE_EXTENSIONS.md) for the complete workflow and acceptance checklist.

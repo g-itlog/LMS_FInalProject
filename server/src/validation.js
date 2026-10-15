@@ -24,6 +24,10 @@ export const schemas = {
     password,
     role: z.enum(["student", "instructor"]).default("student"),
     inviteCode: z.string().max(200).optional(),
+    verificationToken: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
   }),
   login: z.object({
     email: z

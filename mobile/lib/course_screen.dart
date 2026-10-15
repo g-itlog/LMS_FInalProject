@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 import 'widgets.dart';
 import 'submission_screen.dart';
+import 'learning_screen.dart';
 
 class CourseScreen extends StatefulWidget {
   final LmsApi api;
@@ -173,6 +174,14 @@ class _CourseScreenState extends State<CourseScreen> {
                         value: 2,
                         label: Text('Updates', style: TextStyle(fontSize: 11)),
                       ),
+                      ButtonSegment(
+                        value: 3,
+                        label: Text('Quizzes', style: TextStyle(fontSize: 11)),
+                      ),
+                      ButtonSegment(
+                        value: 4,
+                        label: Text('Progress', style: TextStyle(fontSize: 11)),
+                      ),
                     ],
                     selected: {tab},
                     onSelectionChanged: (v) => setState(() => tab = v.first),
@@ -188,6 +197,24 @@ class _CourseScreenState extends State<CourseScreen> {
     ),
   );
   List<Widget> content(Json course) {
+    if (tab == 3) {
+      return [
+        QuizList(
+          key: ValueKey('quizzes-${widget.courseId}'),
+          api: widget.api,
+          courseId: widget.courseId,
+        ),
+      ];
+    }
+    if (tab == 4) {
+      return [
+        CourseProgressView(
+          key: ValueKey('progress-${widget.courseId}'),
+          api: widget.api,
+          courseId: widget.courseId,
+        ),
+      ];
+    }
     final type = ['materials', 'assignments', 'announcements'][tab];
     final items = records(course[type]);
     if (items.isEmpty) {

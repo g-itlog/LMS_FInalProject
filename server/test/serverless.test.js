@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import bcrypt from "bcryptjs";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { MongoMemoryServer, MongoMemoryReplSet } from "mongodb-memory-server";
+import { registrationProof } from "./helpers/email-proof.js";
 import { connectDatabase } from "../src/database.js";
 import { createServerlessHandler, readRuntimeConfig } from "../src/runtime.js";
 
@@ -154,7 +155,7 @@ test("application initialization failure closes its database connection", async 
 });
 
 test("the function handles real Atlas-compatible database auth, secure cookies, routes, and logout", async () => {
-  const mongo = await MongoMemoryServer.create();
+  const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   let database,
     connections = 0;
   try {
@@ -177,6 +178,11 @@ test("the function handles real Atlas-compatible database auth, secure cookies, 
         name: "Hosted Student",
         email: "hosted@example.test",
         password: "Password2026!",
+        verificationToken: await registrationProof(
+          database.db,
+          "hosted@example.test",
+          env.JWT_SECRET,
+        ),
       })
       .expect(201);
     assert.match(signup.headers["set-cookie"][0], /HttpOnly/);
@@ -218,16 +224,14 @@ test("rewritten admin directory requests preserve filtering, strict validation, 
     const password = "Password2026!";
     const passwordHash = await bcrypt.hash(password, 4);
     for (const role of ["admin", "student", "instructor"])
-      await database.db
-        .collection("lms_users")
-        .insertOne({
-          name: `Hosted ${role}`,
-          email: `${role}@rewrite-test.edu`,
-          passwordHash,
-          role,
-          status: "active",
-          createdAt: new Date(),
-        });
+      await database.db.collection("lms_users").insertOne({
+        name: `Hosted ${role}`,
+        email: `${role}@rewrite-test.edu`,
+        passwordHash,
+        role,
+        status: "active",
+        createdAt: new Date(),
+      });
     const handler = createServerlessHandler({
       env,
       connect: async () => database,

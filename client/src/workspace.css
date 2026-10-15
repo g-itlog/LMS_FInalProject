@@ -118,6 +118,8 @@ a:focus-visible {
   letter-spacing: 1.25px;
 }
 .sidebar {
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #203d49;
   color: #f6f3e9;
   border: 0;
@@ -811,6 +813,7 @@ a:focus-visible {
   background: #f7f5ef;
 }
 .auth-form-wrap {
+  overflow-wrap: anywhere;
   max-width: 375px;
 }
 .auth-form-wrap h2 {

@@ -18,6 +18,9 @@ import {
   ScrollText,
   ShieldCheck,
   KeyRound,
+  ChartNoAxesCombined,
+  Bell,
+  ListChecks,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "./auth";
@@ -40,13 +43,18 @@ const links = [
   ["/", "Overview", LayoutDashboard],
   ["/courses", "My courses", LibraryBig],
   ["/assignments", "Assignments", ClipboardList],
+  ["/quizzes", "Quizzes", ListChecks],
   ["/grades", "Grades & feedback", GraduationCap],
   ["/announcements", "Announcements", Megaphone],
+  ["/notifications", "Inbox", Bell],
 ];
 const adminLinks = [
   ["/", "Overview", LayoutDashboard],
+  ["/admin/reports", "Reports & analytics", ChartNoAxesCombined],
   ["/admin/users", "Users", Users],
   ["/admin/courses", "Courses", LibraryBig],
+  ["/admin/enrollments", "Enrollments", GraduationCap],
+  ["/admin/announcements", "School announcements", Megaphone],
   ["/admin/invitations", "Invitation codes", KeyRound],
   ["/admin/activity", "Activity log", ScrollText],
 ];
@@ -247,11 +255,11 @@ export default function Shell() {
               }).format(new Date())}
             </span>
             <Link
-              to={admin ? "/admin/activity" : "/announcements"}
+              to={admin ? "/admin/activity" : "/notifications"}
               className="icon-btn"
-              aria-label={admin ? "Activity log" : "Announcements"}
+              aria-label={admin ? "Activity log" : "Inbox"}
             >
-              {admin ? <ShieldCheck size={19} /> : <Megaphone size={19} />}
+              {admin ? <ShieldCheck size={19} /> : <Bell size={19} />}
             </Link>
             <span className="top-divider" />
             <Link to="/profile" className="user-link">

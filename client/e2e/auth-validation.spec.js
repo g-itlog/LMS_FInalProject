@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { submitRegistration } from "./helpers/email";
 
 test("login validates inline, blocks invalid requests, and retains server authentication", async ({
   page,
@@ -84,9 +85,7 @@ test("student registration validates names and password rules live on a phone", 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole("button", { name: "Create account", exact: true })
-    .click();
+  await submitRegistration(page);
   await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
   expect(attempts).toBe(1);
 });
@@ -110,12 +109,13 @@ test("instructor code validation follows the selected role and auth pages reset"
   );
   await page.getByLabel("Instructor invitation code").fill("wrong-code");
   await expect(page.locator("#inviteCode-error")).toBeEmpty();
-  await page
-    .getByRole("button", { name: "Create account", exact: true })
-    .click();
+  await submitRegistration(page, 403);
   await expect(page.getByRole("alert")).toContainText(
     "valid instructor invitation code",
   );
+  await page
+    .getByRole("button", { name: "Back to registration", exact: true })
+    .click();
   await page.getByRole("button", { name: /student/ }).click();
   await expect(page.getByLabel("Instructor invitation code")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);

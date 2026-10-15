@@ -336,7 +336,8 @@ test("course oversight controls publication while preserving enrollment and inst
 test("administrative activity is searchable, attributed, private, and contains no passwords", async () => {
   const result = await admin.get("/api/admin/activity").expect(200);
   assert.ok(result.body.total >= 7);
-  assert.ok(result.body.items.every((item) => item.actorName === "Test admin"));
+  assert.ok(result.body.items.every((item) => item.actorName));
+  assert.ok(result.body.items.some((item) => item.actorName === "Test admin"));
   assert.ok(
     result.body.items.some((item) => item.action === "course.publication"),
   );

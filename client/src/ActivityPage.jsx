@@ -58,11 +58,15 @@ export default function ActivityPage({ type }) {
     items = items.filter((item) =>
       statusFilter === "graded"
         ? (item.submission?.grade ?? item.grade) != null
-        : statusFilter === "pending"
-          ? type === "grades" && instructor
-            ? item.grade == null
-            : item.submission && item.submission.grade == null
-          : !item.submission,
+        : statusFilter === "upcoming"
+          ? !item.submission && new Date(item.dueDate) >= new Date()
+          : statusFilter === "overdue"
+            ? !item.submission && new Date(item.dueDate) < new Date()
+            : statusFilter === "pending"
+              ? type === "grades" && instructor
+                ? item.grade == null
+                : item.submission && item.submission.grade == null
+              : !item.submission,
     );
   const shown = items.slice((page - 1) * 8, page * 8);
   return (
@@ -113,6 +117,8 @@ export default function ActivityPage({ type }) {
                 <option value="graded">Graded</option>
                 <option value="pending">Awaiting grade</option>
                 {!instructor && <option value="todo">Not submitted</option>}
+                {!instructor && <option value="upcoming">Upcoming</option>}
+                {!instructor && <option value="overdue">Overdue</option>}
               </select>
             )}
         </div>

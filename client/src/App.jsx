@@ -22,6 +22,11 @@ import {
   AdminUsers,
 } from "./Admin";
 import AdminInvitations from "./AdminInvitations";
+import AdminReports from "./AdminReports";
+import { QuizHub } from "./Learning";
+import Notices from "./Notices";
+import PasswordReset from "./PasswordReset";
+import { AdminEnrollments, AdminAnnouncements } from "./AdminLearning";
 function Home() {
   const { user } = useAuth();
   return user.role === "admin" ? <AdminOverview /> : <Dashboard />;
@@ -52,6 +57,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<AuthPage key="login" />} />
+          <Route path="/forgot-password" element={<PasswordReset />} />
           <Route
             path="/register"
             element={<AuthPage key="register" register />}
@@ -65,8 +71,13 @@ export default function App() {
               <Route path="courses" element={<AdminCourses />} />
               <Route path="activity" element={<AdminActivity />} />
               <Route path="invitations" element={<AdminInvitations />} />
+              <Route path="reports" element={<AdminReports />} />
+              <Route path="enrollments" element={<AdminEnrollments />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
             </Route>
             <Route element={<LearningOnly />}>
+              <Route path="/quizzes" element={<QuizHub />} />
+              <Route path="/notifications" element={<Notices />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:courseId" element={<CourseDetail />} />
               <Route

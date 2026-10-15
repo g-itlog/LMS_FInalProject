@@ -1,10 +1,12 @@
 # Deploy Knowhere to Grow on Vercel
 
-The web application now includes a web-only administrator workspace. After deploying the updated source, follow [ADMIN_GUIDE.md](ADMIN_GUIDE.md) to create the first administrator against the same Atlas database. Existing Vercel environment variables remain sufficient; Flutter remains student-only. Administrators issue single-use instructor invitations: successful signup consumes a code permanently using an Atlas transaction. Unused codes can be edited or deactivated, and consumed codes appear only in read-only used history.
+The web application now includes a web-only administrator workspace. After deploying the updated source, follow [ADMIN_GUIDE.md](ADMIN_GUIDE.md) to create the first administrator against the same Atlas database. Keep the existing database/auth settings and add the SMTP settings below for email verification and recovery; Flutter remains student-only. Administrators issue single-use instructor invitations: successful signup consumes a code permanently using an Atlas transaction. Unused codes can be edited or deactivated, and consumed codes appear only in read-only used history.
 
 This project deploys React and the Express API together in **one Vercel project**, with MongoDB Atlas storing records and GridFS files. Your local server and PC do not need to run after deployment. Uploads are limited to **3 MB** in the API, web client, and Flutter app to leave room below Vercel Functions' 4.5 MB request limit. No Blob storage setup is required.
 
 ## 1. Check and push the code
+
+**Email OTP update:** registration and Forgot password now require six private SMTP variables. Follow [EMAIL_SETUP.md](EMAIL_SETUP.md), add the variables in Vercel, and redeploy. Existing database/auth variables alone are sufficient for login and learning features, but cannot send verification emails.
 
 From the repository root:
 
@@ -54,6 +56,12 @@ Before clicking Deploy, add these private environment variables for Production a
 | `INSTRUCTOR_INVITE_CODE` | Your existing code; imported once into the admin-managed list as a single-use invitation |
 | `NODE_ENV` | `production` |
 | `CLIENT_ORIGINS` | Exact HTTPS production origin, such as `https://YOUR-ACTUAL-SITE.vercel.app` |
+| `SMTP_HOST` | Your provider's SMTP host, e.g. `smtp.gmail.com` |
+| `SMTP_PORT` | `587` for STARTTLS, or `465` for implicit TLS |
+| `SMTP_SECURE` | `false` on 587; `true` on 465 |
+| `SMTP_USER` | Sending account / provider SMTP username |
+| `SMTP_PASS` | Private App Password or SMTP key/password |
+| `SMTP_FROM` | Verified sender, e.g. `Knowhere to Grow <your-sender@gmail.com>` |
 
 Generate a secret locally if needed:
 

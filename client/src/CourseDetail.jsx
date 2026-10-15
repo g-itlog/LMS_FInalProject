@@ -32,6 +32,8 @@ import {
   formatDate,
 } from "./ui";
 import { Editor } from "./Editors";
+import { QuizHub, CourseProgress } from "./Learning";
+import Extensions from "./Extensions";
 
 export default function CourseDetail() {
   const { courseId } = useParams();
@@ -43,6 +45,8 @@ export default function CourseDetail() {
     "materials",
     "assignments",
     "announcements",
+    "quizzes",
+    "progress",
     ...(instructor ? ["students", "settings"] : []),
   ];
   const tab = tabs.includes(requested) ? requested : "materials";
@@ -57,6 +61,7 @@ export default function CourseDetail() {
   const [submitAssignment, setSubmitAssignment] = useState(null);
   const [busy, setBusy] = useState(false);
   const review = instructor ? params.get("review") : null;
+  const extensionAssignmentId = params.get("extensions");
   if (loading) return <Loading />;
   if (error) return <ErrorState error={error} retry={reload} />;
   const access = instructor || course.enrolled;
@@ -160,15 +165,19 @@ export default function CourseDetail() {
           <div className="section-heading course-section-heading">
             <div>
               <h2>
-                {tab === "materials"
-                  ? "Your learning resources"
-                  : tab === "assignments"
-                    ? "Put learning into practice"
-                    : tab === "announcements"
-                      ? "From your classroom"
-                      : tab === "students"
-                        ? "Meet your class"
-                        : "Course settings"}
+                {tab === "quizzes"
+                  ? "Test your understanding"
+                  : tab === "progress"
+                    ? "Every step counts"
+                    : tab === "materials"
+                      ? "Your learning resources"
+                      : tab === "assignments"
+                        ? "Put learning into practice"
+                        : tab === "announcements"
+                          ? "From your classroom"
+                          : tab === "students"
+                            ? "Meet your class"
+                            : "Course settings"}
               </h2>
               <p>
                 {tab === "materials"
@@ -192,6 +201,8 @@ export default function CourseDetail() {
                 </Button>
               )}
           </div>
+          {tab === "quizzes" && <QuizHub courseId={courseId} />}
+          {tab === "progress" && <CourseProgress courseId={courseId} />}
           {tab === "materials" && (
             <div className="resource-list">
               {course.materials.length ? (
@@ -268,9 +279,25 @@ export default function CourseDetail() {
                         {actions("assignments", a)}
                       </div>
                       <p className="preserve-lines assignment-instructions">
+                        {a.hasIndividualExtension && (
+                          <small className="learning-block">
+                            Individual extension active · Class deadline:{" "}
+                            {formatDate(a.originalDueDate, true)}
+                          </small>
+                        )}
                         {a.instructions}
                       </p>
                       <div className="assignment-bottom">
+                        <Button
+                          variant="light"
+                          onClick={() =>
+                            setParams({ tab: "assignments", extensions: a._id })
+                          }
+                        >
+                          {instructor
+                            ? "Review deadline extensions"
+                            : "Request Deadline Extension"}
+                        </Button>
                         <small>
                           {a.allowLate
                             ? "Late submissions accepted"
@@ -483,6 +510,15 @@ export default function CourseDetail() {
           onSaved={reload}
         />
       )}
+      {extensionAssignmentId && (
+        <Extensions
+          assignmentId={extensionAssignmentId}
+          onClose={() => {
+            setParams({ tab: "assignments" });
+            reload();
+          }}
+        />
+      )}
       {review && (
         <ReviewModal
           assignmentId={review}
@@ -652,6 +688,9 @@ function GradeForm({ submission: s, maxPoints, onSaved }) {
         <div className="student-response preserve-lines">{s.text}</div>
       )}
       <FileDownload file={s.file} />
+      {s.effectiveDueDate && (
+        <p>Current student deadline: {formatDate(s.effectiveDueDate, true)}</p>
+      )}
       <form
         onSubmit={async (e) => {
           e.preventDefault();

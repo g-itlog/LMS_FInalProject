@@ -2,11 +2,17 @@
 
 A learning management system for students, instructors, and web administrators, built with **MongoDB, Express, React, and Node.js**, plus a **Flutter student app**. The web and mobile apps use the same backend and records. Administrator access is web-only.
 
+Students on web and Flutter can take quizzes, review permitted attempts, mark lectures complete, track course progress, and read a shared in-app inbox alongside assignments and grades. Instructors manage quizzes/questions and monitor learner progress. Administrators monitor enrollments, edit/archive/restore courses, publish school announcements, and inspect current learning analytics and system activity.
+
+Students can also [request assignment deadline extensions](docs/DEADLINE_EXTENSIONS.md) with a reason and requested date. The owning instructor reviews requests from the inbox, approves for that student or the whole class, or rejects with a comment. Student web and Flutter share the same effective deadlines, history, and notifications.
+
 Source repository: [g-itlog/LMS_FInalProject](https://github.com/g-itlog/LMS_FInalProject). See [GitHub and deployment notes](docs/GITHUB_AND_DEPLOYMENT.md) before importing the project into Vercel, including API routing, private environment variables, and the attachment-size limit.
 
 Deploy the website and API together in one Vercel project using the [deployment walkthrough](docs/DEPLOYMENT_WALKTHROUGH.md). Set Root Directory to the repository root (`.`), use the checked-in `vercel.json`, and run `npm run deploy:check` before pushing. MongoDB Atlas stores records and GridFS attachments; the attachment limit is 3 MB.
 
 See the [administrator setup and permissions guide](docs/ADMIN_GUIDE.md) for the private `npm run admin:create` command, user management, course oversight, suspension, and activity logs. Public registration cannot create administrator accounts; no default production administrator is seeded.
+
+Web administrators also have overview graphs and **Reports & analytics** with Philippine-time date filters, school activity trends, grading summaries, weighted scores, searchable course reports, and daily/course CSV downloads. The report screen explains which figures are current totals and which belong to the selected period. Flutter remains student-only.
 
 ## Project folders
 
@@ -73,7 +79,7 @@ To add only those eight courses to an existing database, run `npm run seed:cours
 
 Students register, browse published courses, join courses, read materials and announcements, submit text and/or attachments, and see grades and feedback. The dashboard tracks upcoming unsubmitted assignments and a weighted overall grade using only graded work. A score of zero is a valid grade.
 
-Instructors register using a private, single-use invitation issued through the administrator's web workspace. Successful registration removes the code from the unused list and permanently prevents reuse; the administrator can inspect a read-only used history. Instructors create and publish courses, manage materials, assignments and announcements, view enrolled students, and grade submissions with written feedback. Only the owning instructor can manage a course. Published courses are visible in the student catalog; draft courses stay private. Unpublishing closes new enrollment while preserving enrolled students’ access.
+Instructors register using a private, single-use invitation issued through the administrator's web workspace. Successful registration removes the code from the unused list and permanently prevents reuse; the administrator can inspect a read-only used history. Instructors create and publish courses, manage materials, assignments and announcements, view enrolled students, and grade submissions with written feedback. Only the owning instructor can manage teaching content and grades; administrators can edit course metadata and archive/restore records. Published courses are visible in the student catalog; draft courses stay private. Unpublishing closes new enrollment while preserving enrolled students’ access.
 
 Deleting a course archives it: content becomes inaccessible while database records remain available for recovery. Deleting an assignment permanently removes its submissions, grades, and attachments. Other deleted resources are removed permanently. There is no recovery UI.
 
@@ -99,6 +105,8 @@ Android Studio is installed on the development PC, but the Android SDK is missin
 
 ## Verification
 
+For a complete manual walkthrough with expected results for admin, instructor, student web, and Flutter, follow [the manual acceptance checklist](docs/MANUAL_TEST_GUIDE.md). It covers the shared learning workflow, single-use invitations, access restrictions, deadlines, suspension, publication, responsive layouts, and cleanup of disposable test content.
+
 ```powershell
 npm test
 npm --prefix client run lint
@@ -119,6 +127,10 @@ Create a clean source ZIP using `npm run package:source` from the project root o
 
 ## Delimitations
 
-This is an academic LMS: no payments, library circulation, video conferencing, push notifications, quizzes, attendance, password-reset email, third-party SSO, or offline submission queue. Course enrollment is self-service for published courses. Roles cannot be changed through profile editing. This project implements an LMS, rather than a Library Management System, following the requested student/instructor scope. Confirm the project title with your professor if needed.
+This is an academic LMS: no payments, library circulation, video conferencing, push notifications, attendance, third-party SSO, or offline submission queue. Course enrollment is self-service for published courses. Roles cannot be changed through profile editing. This project implements an LMS, rather than a Library Management System, following the requested student/instructor scope. Confirm the project title with your professor if needed.
 
 Security design follows [Express guidance](https://expressjs.com/en/advanced/best-practice-security/). Mobile platform setup follows [Flutter’s Android instructions](https://docs.flutter.dev/platform-integration/android/setup).
+
+See the [quiz, progress, inbox, and school administration guide](docs/LEARNING_GUIDE.md) for the new workflows, shared student web/Flutter behavior, metric definitions, and acceptance checklist.
+
+Email verification and Forgot password are available on web and student Flutter. Public registration now needs an emailed OTP before creating the account. Configure the six private SMTP variables and perform a real inbox check using [EMAIL_SETUP.md](docs/EMAIL_SETUP.md). Existing accounts remain usable.

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { fail, id, publicUser, role } from "./security.js";
 import { schemas, validate } from "./validation.js";
+import { buildReport, reportCsv, reportPeriod } from "./analytics.js";
 import {
   generateInvitationCode,
   invitationCreate,
@@ -72,6 +73,24 @@ export function adminRoutes(db, invitations) {
   const users = db.collection("lms_users");
   const courses = db.collection("lms_courses");
   const activity = db.collection("lms_admin_activity");
+  router.get("/admin/reports", async (req, res) => {
+    const { courseRows, ...report } = await buildReport(db, req.query);
+    res.json(report);
+  });
+  router.get("/admin/reports/export", async (req, res) => {
+    const period = reportPeriod(req.query);
+    const report = await buildReport(db, {
+      ...req.query,
+      from: period.from,
+      to: period.to,
+    });
+    const kind = period.kind || "courses";
+    res.set({
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="knowhere-${kind}-${period.from}-${period.to}.csv"`,
+    });
+    res.send(reportCsv(report, kind));
+  });
   async function record(actor, action, target, detail) {
     await activity.insertOne({
       actorId: actor._id,
@@ -270,6 +289,7 @@ export function adminRoutes(db, invitations) {
       recentUsers,
       recentSubmissions,
       recentActivity,
+      analytics,
     ] = await Promise.all([
       users
         .aggregate([{ $group: { _id: "$role", total: { $sum: 1 } } }])
@@ -296,6 +316,7 @@ export function adminRoutes(db, invitations) {
         .toArray(),
       submissions(contentFilter),
       activity.find().sort({ createdAt: -1, _id: -1 }).limit(6).toArray(),
+      buildReport(db),
     ]);
     const roleCounts = Object.fromEntries(roles.map((r) => [r._id, r.total]));
     res.json({
@@ -319,6 +340,14 @@ export function adminRoutes(db, invitations) {
       recentUsers: recentUsers.map(account),
       recentSubmissions,
       recentActivity,
+      analytics: {
+        from: analytics.from,
+        to: analytics.to,
+        timeZone: analytics.timeZone,
+        generatedAt: analytics.generatedAt,
+        daily: analytics.daily,
+        learning: analytics.learning,
+      },
     });
   });
   router.get("/admin/users", async (req, res) => {
@@ -374,6 +403,40 @@ export function adminRoutes(db, invitations) {
       },
       canChangeRole:
         user.role !== "admin" && !ownedCourses && !enrollments && !submitted,
+      ownedCourseList:
+        user.role === "instructor"
+          ? await courses
+              .find(
+                { instructorId: user._id },
+                {
+                  projection: { title: 1, code: 1, published: 1, deletedAt: 1 },
+                },
+              )
+              .sort({ createdAt: -1 })
+              .toArray()
+          : [],
+      enrollmentList:
+        user.role === "student"
+          ? await db
+              .collection("lms_enrollments")
+              .aggregate([
+                { $match: { studentId: user._id } },
+                {
+                  $lookup: {
+                    from: "lms_courses",
+                    localField: "courseId",
+                    foreignField: "_id",
+                    pipeline: [
+                      { $project: { title: 1, code: 1, deletedAt: 1 } },
+                    ],
+                    as: "course",
+                  },
+                },
+                { $unwind: "$course" },
+                { $project: { course: 1, createdAt: 1 } },
+              ])
+              .toArray()
+          : [],
     });
   });
   router.post("/admin/users", async (req, res) => {
@@ -440,7 +503,10 @@ export function adminRoutes(db, invitations) {
     if (!Object.keys(changes).length) return res.json({ user: account(user) });
     await users.updateOne(
       { _id: user._id, role: { $ne: "admin" } },
-      { $set: { ...changes, updatedAt: new Date() } },
+      {
+        $set: { ...changes, updatedAt: new Date() },
+        ...(changes.email ? { $unset: { emailVerifiedAt: "" } } : {}),
+      },
     );
     if (changes.role || changes.email || changes.status)
       await db.collection("lms_sessions").deleteMany({ userId: user._id });

@@ -81,7 +81,9 @@ class LmsApi extends ChangeNotifier {
       if (body != null) request.body = jsonEncode(body);
       final streamed = await client
           .send(request)
-          .timeout(const Duration(seconds: 30));
+          .timeout(
+            Duration(seconds: path.endsWith('/email-otp/request') ? 45 : 30),
+          );
       final response = await http.Response.fromStream(
         streamed,
       ).timeout(const Duration(seconds: 30));

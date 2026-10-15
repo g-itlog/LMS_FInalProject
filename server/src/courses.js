@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { fail, id, role } from "./security.js";
 import { schemas, validate } from "./validation.js";
+import { audit } from "./audit.js";
+import { studentAssignments } from "./deadlines.js";
 
 export async function accessCourse(db, user, courseId, owner = false) {
   const course = await db
@@ -120,6 +122,7 @@ export function courseRoutes(db, bucket) {
       updatedAt: new Date(),
     };
     const result = await courses.insertOne(course);
+    await audit(db, req.user, "course.created", course, "Created a course.");
     res.status(201).json({ ...course, _id: result.insertedId });
   });
   router.get("/courses/:courseId", async (req, res) => {
@@ -202,7 +205,11 @@ export function courseRoutes(db, bucket) {
       enrolled,
       studentCount,
       materials,
-      assignments,
+      assignments: isOwner
+        ? assignments
+        : (await studentAssignments(db, assignments, req.user._id)).sort(
+            (a, b) => a.dueDate - b.dueDate,
+          ),
       announcements,
       submissions,
       students,
@@ -220,6 +227,13 @@ export function courseRoutes(db, bucket) {
       { _id: course._id, deletedAt: { $exists: false } },
       { $set: { ...data, updatedAt: new Date() } },
     );
+    await audit(
+      db,
+      req.user,
+      "course.updated",
+      course,
+      "Updated course details.",
+    );
     res.json({ ...course, ...data });
   });
   router.delete("/courses/:courseId", role("instructor"), async (req, res) => {
@@ -234,6 +248,13 @@ export function courseRoutes(db, bucket) {
       { _id: course._id },
       { $set: { deletedAt: new Date(), published: false } },
     );
+    await audit(
+      db,
+      req.user,
+      "course.archived",
+      course,
+      "Archived course; learning records retained.",
+    );
     res.json({
       message:
         "Course deleted. Its records are retained for recovery but are no longer accessible.",
@@ -246,11 +267,19 @@ export function courseRoutes(db, bucket) {
       const { course } = await accessCourse(db, req.user, req.params.courseId);
       if (!course.published)
         fail(403, "This course is not open for enrollment.");
-      await enrollments.updateOne(
+      const joined = await enrollments.updateOne(
         { courseId: course._id, studentId: req.user._id },
         { $setOnInsert: { createdAt: new Date() } },
         { upsert: true },
       );
+      if (joined.upsertedCount)
+        await audit(
+          db,
+          req.user,
+          "enrollment.created",
+          course,
+          "Student joined a course.",
+        );
       res.json({ message: "You have joined the course." });
     },
   );
@@ -321,10 +350,15 @@ export function courseRoutes(db, bucket) {
     );
     res.json({
       courses: courseCards,
-      assignments: assignments.map((a) => ({
-        ...a,
-        course: names[a.courseId],
-      })),
+      assignments: (req.user.role === "student"
+        ? await studentAssignments(db, assignments, req.user._id)
+        : assignments
+      )
+        .sort((a, b) => a.dueDate - b.dueDate)
+        .map((a) => ({
+          ...a,
+          course: names[a.courseId],
+        })),
       announcements: announcements.map((a) => ({
         ...a,
         course: names[a.courseId],

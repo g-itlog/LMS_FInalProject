@@ -13,6 +13,7 @@ export const message = (error) =>
     ? "The request took too long. Please try again."
     : "Unable to connect. Check your connection and try again.");
 api.interceptors.request.use((config) => {
+  if (config.url?.endsWith("/email-otp/request")) config.timeout = 45000;
   if (
     config.data instanceof FormData &&
     config.data.get("file")?.size > MAX_ATTACHMENT_BYTES

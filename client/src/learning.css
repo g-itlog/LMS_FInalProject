@@ -1,0 +1,125 @@
+.learning-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.quiz-question {
+  border: 1px solid var(--border, #d7dacf);
+  border-radius: 5px;
+  padding: 20px;
+  margin: 22px 0;
+  min-width: 0;
+}
+.quiz-question legend {
+  float: none;
+  width: auto;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0 6px;
+  overflow-wrap: anywhere;
+}
+.quiz-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px;
+  border-bottom: 1px solid #e9e9e1;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.quiz-option input {
+  margin-top: 4px;
+  flex-shrink: 0;
+  accent-color: #244b59;
+}
+.quiz-review {
+  padding: 16px 0;
+  border-bottom: 1px solid #ddd;
+}
+.quiz-review p {
+  margin: 8px 0;
+}
+.learning-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #e1e2da;
+  padding: 16px 0;
+}
+.learning-row > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.learning-row .btn {
+  flex-shrink: 0;
+}
+.learning-progress {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin: 20px 0;
+}
+.learning-progress progress {
+  width: 100%;
+  height: 14px;
+  accent-color: #244b59;
+}
+.learning-progress strong {
+  white-space: nowrap;
+  font-size: 13px;
+}
+.learning-block {
+  display: block;
+  margin-top: 4px;
+}
+.notice-unread {
+  border-left: 4px solid #244b59;
+}
+.notice-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.learning-toolbar .form-select {
+  width: auto;
+}
+.extension-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 20px 0;
+}
+.extension-dates dt {
+  font-size: 11px;
+  color: #5f6e70;
+  margin-bottom: 5px;
+}
+.extension-dates dd {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.extension-decision {
+  border-top: 1px solid #deded4;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+@media (max-width: 500px) {
+  .extension-dates {
+    grid-template-columns: 1fr;
+  }
+  .quiz-question {
+    padding: 12px;
+  }
+  .learning-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .learning-progress {
+    flex-wrap: wrap;
+  }
+  .learning-toolbar .form-select {
+    width: 100%;
+  }
+}

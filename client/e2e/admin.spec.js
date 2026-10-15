@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import path from "node:path";
+import fs from "node:fs/promises";
+import { submitRegistration } from "./helpers/email";
 
 async function login(page, email = "admin@classroom.test") {
   await page.goto("/login");
@@ -26,6 +28,7 @@ test("administrator overview and every admin page fit desktop, tablet, and phone
       "/admin/users",
       "/admin/courses",
       "/admin/invitations",
+      "/admin/reports",
       "/admin/activity",
       "/profile",
     ]) {
@@ -81,6 +84,16 @@ test("administrator overview and every admin page fit desktop, tablet, and phone
           fullPage: true,
           animations: "disabled",
         });
+      if ([1440, 390].includes(width) && route === "/admin/reports") {
+        await expect(page.locator(".analytics-course-table")).toBeVisible();
+        await page.screenshot({
+          path: path.resolve(
+            `../docs/screenshots/web-admin-reports-${width === 1440 ? "desktop" : "phone"}.png`,
+          ),
+          fullPage: true,
+          animations: "disabled",
+        });
+      }
     }
   }
   await page.goto("/courses");
@@ -220,11 +233,143 @@ test("student routes cannot enter the administration workspace", async ({
   page,
 }) => {
   await login(page, "student@classroom.test");
-  await page.goto("/admin/users");
+  await page.goto("/admin/reports");
   await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Users", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Reports & analytics", exact: true }),
+  ).toHaveCount(0);
+  await page.goto("/admin/users");
+  await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
+});
+
+test("admin reports support period filters, exact chart values, empty periods, course search, and CSV downloads", async ({
+  page,
+}) => {
+  await login(page);
+  await expect(page.locator(".analytics-line-chart")).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: /Your learning community:/ }),
+  ).toBeVisible();
+  await page
+    .getByRole("link", { name: "Reports & analytics", exact: true })
+    .last()
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Reports & analytics", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".analytics-course-table")).toBeVisible();
+  await page.getByLabel("Reporting period", { exact: true }).selectOption("7");
+  await expect(page.locator(".analytics-course-table")).toBeVisible();
+  await page.getByText("View daily data", { exact: true }).click();
+  await expect(page.locator(".analytics-data-details tbody tr")).toHaveCount(7);
+  const slider = page.getByRole("slider", { name: "Inspect activity date" });
+  await slider.focus();
+  await slider.press("Home");
+  await expect(slider).toHaveValue("0");
+  await slider.press("End");
+  await expect(slider).toHaveValue("6");
+  const query = new URLSearchParams({
+    from: await page.getByLabel("From", { exact: true }).inputValue(),
+    to: await page.getByLabel("Through", { exact: true }).inputValue(),
+  });
+  const response = await page.request.get(`/api/admin/reports?${query}`);
+  const report = await response.json();
+  await expect(
+    page
+      .locator(".analytics-stats .stat-card")
+      .filter({ hasText: "Latest submissions" })
+      .locator("strong"),
+  ).toHaveText(String(report.summary.submissions));
+  await page
+    .getByRole("searchbox", { name: "Search report courses" })
+    .fill("IT 301");
+  await expect(page.locator(".analytics-course-table tbody tr")).toHaveCount(1);
+  await expect(
+    page.getByRole("searchbox", { name: "Search report courses" }),
+  ).toBeFocused();
+  await expect(page.locator(".analytics-course-table tbody")).toContainText(
+    "IT 301",
+  );
+  const courseDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Course CSV", exact: true }).click();
+  const courseFile = await courseDownload;
+  expect(courseFile.suggestedFilename()).toContain("knowhere-courses-");
+  const courseCsv = await fs.readFile(await courseFile.path(), "utf8");
+  expect(courseCsv).toContain('"IT 301"');
+  expect(courseCsv).toContain('"Weighted score percent"');
+  expect(courseCsv).not.toContain('"CS 201"');
+  const dailyDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Daily CSV", exact: true }).click();
+  const dailyFile = await dailyDownload;
+  const dailyCsv = await fs.readFile(await dailyFile.path(), "utf8");
+  expect(dailyCsv.split("\r\n").filter(Boolean)).toHaveLength(8);
+  await page.getByLabel("From", { exact: true }).fill("2001-01-01");
+  await page.getByLabel("Through", { exact: true }).fill("2001-01-02");
+  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  await expect(
+    page.getByText("No activity recorded for this period.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".analytics-stats .stat-card")
+      .filter({ hasText: "Latest submissions" })
+      .locator("strong"),
+  ).toHaveText("0");
+  await expect(page.locator(".analytics-summary-metrics")).not.toContainText(
+    "NaN",
+  );
+  await page.getByLabel("From", { exact: true }).fill("2001-01-03");
+  await page.getByRole("button", { name: "Apply dates", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("1–366 days");
+});
+
+test("admin reports show a recoverable API error and retry correctly", async ({
+  page,
+}) => {
+  await login(page);
+  await page.route("**/api/admin/reports?*", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Report temporarily unavailable." }),
+    }),
+  );
+  await page.goto("/admin/reports");
+  await expect(page.getByRole("alert")).toContainText(
+    "Report temporarily unavailable.",
+  );
+  await page.unroute("**/api/admin/reports?*");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.locator(".analytics-course-table")).toBeVisible();
+  await page.route("**/api/admin/reports/export?*", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message: "CSV export temporarily unavailable. Try again.",
+      }),
+    }),
+  );
+  const exportButton = page.getByRole("button", {
+    name: "Course CSV",
+    exact: true,
+  });
+  await exportButton.click();
+  await expect(
+    page.getByText("CSV export temporarily unavailable. Try again.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(exportButton).toBeEnabled();
+  await page.unroute("**/api/admin/reports/export?*");
+  const retryDownload = page.waitForEvent("download");
+  await exportButton.click();
+  expect((await retryDownload).suggestedFilename()).toContain(
+    "knowhere-courses-",
+  );
 });
 
 test("admin manages single-use invitations and successful signup permanently consumes the code", async ({
@@ -249,14 +394,12 @@ test("admin manages single-use invitations and successful signup permanently con
     .getByRole("button", { name: "Create invitation", exact: true })
     .click();
   await expect(create).toHaveCount(0);
-  const card = page
-    .locator("article")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "Browser faculty invitation",
-        exact: true,
-      }),
-    });
+  const card = page.locator("article").filter({
+    has: page.getByRole("heading", {
+      name: "Browser faculty invitation",
+      exact: true,
+    }),
+  });
   const code = await card.locator("code").innerText();
   expect(code).toMatch(/^[A-Za-z0-9_-]{24}$/);
   await card
@@ -286,15 +429,7 @@ test("admin manages single-use invitations and successful signup permanently con
     await target.getByLabel("Password", { exact: true }).fill("Password2026!");
   }
   async function submit(target, expectedStatus) {
-    const response = target.waitForResponse(
-      (r) =>
-        r.url().endsWith("/api/auth/register") &&
-        r.request().method() === "POST",
-    );
-    await target
-      .getByRole("button", { name: "Create account", exact: true })
-      .click();
-    expect((await response).status()).toBe(expectedStatus);
+    await submitRegistration(target, expectedStatus);
   }
   try {
     const teacher = await teacherContext.newPage();

@@ -10,7 +10,7 @@ function localDate(value) {
     .toISOString()
     .slice(0, 16);
 }
-export function Editor({ type, record, courseId, onClose, onSaved }) {
+export function Editor({ type, record, courseId, endpoint, onClose, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [color, setColor] = useState(record?.color || "violet");
@@ -40,11 +40,13 @@ export function Editor({ type, record, courseId, onClose, onSaved }) {
       if (!form.get("file")?.size) form.delete("file");
       data = form;
     }
-    const url = record
-      ? `/${type}/${record._id}`
-      : type === "courses"
-        ? "/courses"
-        : `/courses/${courseId}/${type}`;
+    const url =
+      endpoint ||
+      (record
+        ? `/${type}/${record._id}`
+        : type === "courses"
+          ? "/courses"
+          : `/courses/${courseId}/${type}`);
     try {
       await api[record ? "patch" : "post"](url, data, {
         timeout: type === "materials" ? 120000 : 30000,

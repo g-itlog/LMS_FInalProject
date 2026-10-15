@@ -21,6 +21,12 @@ await database.db.collection("lms_users").insertOne({
   updatedAt: new Date(),
 });
 const config = {
+  mailer: {
+    ready() {},
+    async sendOtp({ email, code }) {
+      testMail.set(email, code);
+    },
+  },
   secret: "test-only-secret-key-with-at-least-32-characters",
   inviteCode: "test-instructor-code",
   production: false,
@@ -31,6 +37,7 @@ const config = {
     "http://127.0.0.1:8001",
   ],
 };
+const testMail = new Map();
 const handler = createServerlessHandler({
   env: {
     MONGO_URL: mongo.getUri(),
@@ -52,10 +59,19 @@ const handler = createServerlessHandler({
         production: false,
         trustProxy: false,
         apiRequestLimit: 5000,
+        authRequestLimit: 1000,
+        mailer: config.mailer,
       },
     }),
 });
 const server = createServer((req, res) => {
+  if (req.url.startsWith("/__test/mail?")) {
+    const email = new URL(req.url, "http://127.0.0.1").searchParams.get(
+      "email",
+    );
+    res.setHeader("Content-Type", "application/json");
+    return res.end(JSON.stringify({ code: testMail.get(email) }));
+  }
   // Reproduce the catch-all parameter injected by the real Vercel rewrite.
   const url = new URL(req.url, "http://127.0.0.1:8001");
   if (url.pathname.startsWith("/api/")) {

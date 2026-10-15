@@ -140,6 +140,22 @@ void main() {
       final api = LmsApi(
         client: MockClient((request) async {
           calls.add(request);
+          if (request.url.path.endsWith('/email-otp/request')) {
+            return http.Response(
+              jsonEncode({
+                'challengeId': 'test-challenge',
+                'resendAfter': 60,
+                'expiresIn': 600,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/email-otp/verify')) {
+            return http.Response(
+              jsonEncode({'verificationToken': 'test-proof'}),
+              200,
+            );
+          }
           return http.Response(
             jsonEncode({
               'user': {
@@ -191,9 +207,12 @@ void main() {
       expect(find.byIcon(Icons.check), findsNWidgets(4));
       expect(tester.takeException(), isNull);
       await tapText(tester, 'Create student account');
-      expect(calls, hasLength(1));
-      expect(calls.single.url.path, '/api/mobile/auth/register');
-      expect(jsonDecode(calls.single.body)['role'], 'student');
+      await enter(tester, 'Email verification code', '123456');
+      await tapText(tester, 'Verify code');
+      expect(calls, hasLength(3));
+      expect(calls.last.url.path, '/api/mobile/auth/register');
+      expect(jsonDecode(calls.last.body)['role'], 'student');
+      expect(jsonDecode(calls.last.body)['verificationToken'], 'test-proof');
       expect(api.user!['role'], 'student');
       expect(tester.takeException(), isNull);
     },

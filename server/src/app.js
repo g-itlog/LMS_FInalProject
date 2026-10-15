@@ -20,7 +20,13 @@ import { courseRoutes } from "./courses.js";
 import { contentRoutes } from "./content.js";
 import { adminRoutes } from "./admin.js";
 import { invitationService } from "./invitations.js";
+import { quizRoutes } from "./quizzes.js";
+import { learningRoutes } from "./learning.js";
+import { noticeRoutes } from "./notices.js";
+import { adminExtensionRoutes } from "./admin-extension.js";
 import { ATTACHMENT_LIMIT_MESSAGE, MAX_ATTACHMENT_BYTES } from "./limits.js";
+import { emailAuthService, emailAuthRoutes } from "./email-auth.js";
+import { extensionRoutes } from "./extensions.js";
 
 export function createApp({ db, bucket, config }) {
   const app = express();
@@ -74,7 +80,7 @@ export function createApp({ db, bucket, config }) {
   });
   const authLimit = rateLimit({
     windowMs: 900000,
-    limit: 30,
+    limit: config.authRequestLimit || 30,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     message: { message: "Too many sign-in attempts. Try again in 15 minutes." },
@@ -82,6 +88,8 @@ export function createApp({ db, bucket, config }) {
   const auth = authenticate(db, config);
   const users = db.collection("lms_users");
   const invitations = invitationService(db, config);
+  const emailAuth = emailAuthService(db, config);
+  app.use("/api", emailAuthRoutes(emailAuth, authLimit));
   async function register(req, res) {
     const data = validate(schemas.register, req.body);
     const mobile = req.path.startsWith("/api/mobile/");
@@ -100,11 +108,27 @@ export function createApp({ db, bucket, config }) {
       department: "",
       createdAt: new Date(),
       updatedAt: new Date(),
+      emailVerifiedAt: new Date(),
     };
-    const result =
-      data.role === "instructor"
-        ? await invitations.register(user, data.inviteCode)
-        : await users.insertOne(user);
+    await invitations.ensure();
+    const session = db.client.startSession();
+    let result;
+    try {
+      await session.withTransaction(async () => {
+        await emailAuth.consumeProof(
+          data.verificationToken,
+          "register",
+          data.email,
+          session,
+        );
+        result =
+          data.role === "instructor"
+            ? await invitations.register(user, data.inviteCode, { session })
+            : await users.insertOne(user, { session });
+      });
+    } finally {
+      await session.endSession();
+    }
     user._id = result.insertedId;
     const token = await startSession(db, res, user, config, mobile);
     res
@@ -182,6 +206,8 @@ export function createApp({ db, bucket, config }) {
     "/api",
     auth,
     adminRoutes(db, invitations),
+    adminExtensionRoutes(db),
+    noticeRoutes(db),
     (req, res, next) => {
       if (req.user.role === "admin")
         return res.status(403).json({
@@ -192,6 +218,9 @@ export function createApp({ db, bucket, config }) {
     },
     courseRoutes(db, bucket),
     contentRoutes(db, bucket),
+    quizRoutes(db),
+    learningRoutes(db),
+    extensionRoutes(db),
   );
   app.use("/api", (req, res) =>
     res.status(404).json({ message: "API endpoint not found." }),
@@ -225,7 +254,7 @@ export function createApp({ db, bucket, config }) {
           : status === 413
             ? ATTACHMENT_LIMIT_MESSAGE
             : status >= 500
-              ? "Something went wrong. Please try again."
+              ? error.publicMessage || "Something went wrong. Please try again."
               : error.message,
     });
   });

@@ -17,6 +17,9 @@ import toast from "react-hot-toast";
 import { api, message } from "./api";
 import { useDebounced, useResource } from "./hooks";
 import { validateAuth } from "./auth-validation";
+import { OverviewAnalytics } from "./AnalyticsCharts";
+import { Editor } from "./Editors";
+import { ProgressBar } from "./Learning";
 import {
   Badge,
   Button,
@@ -121,7 +124,9 @@ function ActivityRows({ items }) {
             <ShieldCheck size={17} />
           </span>
           <div>
-            <strong>{actions[item.action] || "Administrative action"}</strong>
+            <strong>
+              {actions[item.action] || item.action.replaceAll(".", " · ")}
+            </strong>
             <p>{item.targetName}</p>
             <p className="preserve-lines admin-detail">{item.detail}</p>
             <small>
@@ -187,19 +192,6 @@ export function AdminOverview() {
           </Button>
         }
       />
-      <section className="admin-intro panel">
-        <div>
-          <span className="eyebrow">KNOWHERE TO GROW / ADMINISTRATION</span>
-          <h2>A view of your learning community.</h2>
-          <p>
-            Manage access, keep the course catalog organized, and follow the
-            work happening across your school.
-          </p>
-        </div>
-        <Link to="/admin/users" className="btn btn-primary">
-          Manage users <ArrowUpRight size={17} />
-        </Link>
-      </section>
       <div className="stats-grid">
         <Stat icon={Users} value={stats.users} label="Registered users" />
         <Stat
@@ -221,6 +213,19 @@ export function AdminOverview() {
           tone="orange"
         />
       </div>
+      <OverviewAnalytics stats={stats} analytics={data.analytics} />
+      {data.analytics.learning && (
+        <section className="panel">
+          <h2>Current learning progress</h2>
+          <ProgressBar value={data.analytics.learning.progressPercent} />
+          <p>
+            {data.analytics.learning.completedUnits} of{" "}
+            {data.analytics.learning.totalUnits} units completed across active
+            enrollments. Lectures are student-confirmed; assignments count on
+            submission and quizzes on first attempt.
+          </p>
+        </section>
+      )}
       <div className="admin-grid">
         <section className="panel">
           <div className="section-heading">
@@ -406,9 +411,7 @@ export function AdminUsers() {
                     <small>{user.department || "No department"}</small>
                   </div>
                   <div className="admin-user-badges">
-                    <Badge tone={`role-${user.role}`}>
-                      {roles[user.role]}
-                    </Badge>
+                    <Badge tone={`role-${user.role}`}>{roles[user.role]}</Badge>
                     {statusBadge(user)}
                   </div>
                   <Button
@@ -513,6 +516,24 @@ function UserEditor({ data, onClose, onSaved }) {
         Joined {formatDate(user.createdAt)} · Last sign-in{" "}
         {user.lastLoginAt ? formatDate(user.lastLoginAt, true) : "Not recorded"}
       </p>
+      {(data.ownedCourseList?.length > 0 ||
+        data.enrollmentList?.length > 0) && (
+        <section className="quiz-question">
+          <h3>
+            {user.role === "instructor"
+              ? "Instructor-created courses"
+              : "Course enrollments"}
+          </h3>
+          {(user.role === "instructor"
+            ? data.ownedCourseList
+            : data.enrollmentList.map((e) => e.course)
+          ).map((c) => (
+            <p key={c._id}>
+              {c.code} · {c.title} {c.deletedAt ? "(Archived)" : ""}
+            </p>
+          ))}
+        </section>
+      )}
       {user.role === "admin" ? (
         <div className="admin-notice">
           <ShieldCheck size={19} />
@@ -759,6 +780,8 @@ export function AdminCourses() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [publication, setPublication] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [archive, setArchive] = useState(null);
   const query = new URLSearchParams({
     search: useDebounced(search),
     status,
@@ -841,6 +864,17 @@ export function AdminCourses() {
                     ]}
                   />
                   <div className="admin-course-actions">
+                    {!course.deletedAt && (
+                      <Button
+                        variant="light"
+                        onClick={() => setEditing(course)}
+                      >
+                        Edit details
+                      </Button>
+                    )}
+                    <Button variant="light" onClick={() => setArchive(course)}>
+                      {course.deletedAt ? "Restore course" : "Archive course"}
+                    </Button>
                     <Button
                       variant="light"
                       onClick={() => setSelected(course._id)}
@@ -879,6 +913,34 @@ export function AdminCourses() {
       </ListState>
       {selected && (
         <CourseDialog courseId={selected} onClose={() => setSelected(null)} />
+      )}
+      {editing && (
+        <Editor
+          type="courses"
+          record={editing}
+          endpoint={`/admin/courses/${editing._id}`}
+          onClose={() => setEditing(null)}
+          onSaved={reload}
+        />
+      )}
+      {archive && (
+        <Confirm
+          title={archive.deletedAt ? "Restore course?" : "Archive course?"}
+          text={
+            archive.deletedAt
+              ? "The course will be restored as unpublished. Existing enrollments and learning history remain available."
+              : "This denies learning access while preserving enrollments, submissions, and quiz history."
+          }
+          confirmLabel={archive.deletedAt ? "Restore course" : "Archive course"}
+          onClose={() => setArchive(null)}
+          onConfirm={async () => {
+            if (archive.deletedAt)
+              await api.post(`/admin/courses/${archive._id}/restore`);
+            else await api.delete(`/admin/courses/${archive._id}`);
+            setArchive(null);
+            reload();
+          }}
+        />
       )}
       {publication && (
         <Confirm
@@ -1000,8 +1062,8 @@ export function AdminActivity() {
     <>
       <PageHeading
         eyebrow="ACCOUNTABILITY"
-        title="Admin activity"
-        description="Track who created accounts, changed access, or updated course publication."
+        title="System activity"
+        description="Track important account, course, enrollment, teaching, and student learning actions."
         action={
           <Button variant="light" onClick={reload}>
             <RefreshCw size={16} />

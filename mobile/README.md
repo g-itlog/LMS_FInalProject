@@ -4,6 +4,8 @@ This is the **student-only** Flutter Android/iOS app, with a browser preview, fo
 
 Implemented: student registration/login, dashboard statistics, enrolled courses and catalog enrollment, material links and authenticated downloads, assignment instructions/deadlines, file and text submissions, grades and instructor feedback, announcements, profile/password updates, and server-revoked logout.
 
+Also implemented: course **Quizzes** (server grading, attempt limits, closing dates, permitted answer review), **Progress** (lecture completion, assignments and quizzes, best quiz scores), and the home app bar **Inbox** bell (shared notification read state, materials/deadline reminders, course and audience-targeted school updates). These use the same APIs and records as student web. Notifications are in-app only.
+
 Login and registration validate edited fields as you type. Registration includes a live password checklist and enforces the API's 72-byte UTF-8 limit. Invalid submissions focus the first invalid field; switching between forms clears credentials and validation. Mobile registration remains student-only. Password and account verification happens on submission against the shared API.
 
 For the Vercel deployment, rebuild with `--dart-define=API_BASE_URL=https://YOUR-SITE.vercel.app/api`. The website and API share that deployment; Atlas stores the data and files. Attachments are limited to 3 MB in both clients and the backend. Follow [the deployment walkthrough](../docs/DEPLOYMENT_WALKTHROUGH.md) for the exact hosting settings.
@@ -62,6 +64,8 @@ The generated Android release configuration uses Flutter’s default debug signi
 
 ## Verify
 
+The assignment screen's **Request Deadline Extension** opens the student request form and decision history. Reason/date validation, pending requests, individual/class approvals, rejection comments, and inbox links share the web backend. Returning to the submission screen refreshes its deadline and eligibility. See [the workflow guide](../docs/DEADLINE_EXTENSIONS.md).
+
 ```powershell
 flutter analyze
 flutter test
@@ -71,3 +75,7 @@ flutter build web --no-web-resources-cdn
 The rendering tests write Flutter widget screenshots to `../docs/screenshots/flutter-*.png` at 390 × 844 logical pixels. Additional tests check login, dashboard, and course views at 320 pixels with 1.3× text scaling and verify the next-assignment action. These are actual Flutter-rendered UI images using demo-only API fixtures, not screenshots from an emulator or physical phone. Network behavior tests verify endpoints, student-only role checks, bearer headers, secure storage, and token expiry. The Express integration suite separately verifies complete mobile authentication and shared database behavior.
 
 The web and Flutter interfaces share an ink-blue, warm-paper design with Public Sans and Lora fonts bundled locally under the included SIL Open Font Licenses. After pulling font/theme changes, stop the running Flutter session, run `flutter pub get`, and run the app again so the updated asset bundle loads.
+
+See the [quiz, progress, inbox, and school administration guide](../docs/LEARNING_GUIDE.md) for the new workflows, shared student web/Flutter behavior, metric definitions, and acceptance checklist.
+
+Email verification and Forgot password are available on web and student Flutter. Public registration now needs an emailed OTP before creating the account. Configure the six private SMTP variables and perform a real inbox check using [EMAIL_SETUP.md](../docs/EMAIL_SETUP.md). Existing accounts remain usable.

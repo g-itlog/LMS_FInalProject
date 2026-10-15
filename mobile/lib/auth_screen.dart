@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'auth_validation.dart';
 import 'widgets.dart';
+import 'email_verification_screen.dart';
+import 'password_reset_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   final LmsApi api;
@@ -49,10 +51,32 @@ class _AuthScreenState extends State<AuthScreen> {
       error = null;
     });
     try {
+      String? verificationToken;
+      if (register) {
+        final data = await widget.api.send(
+          'POST',
+          '/mobile/auth/email-otp/request',
+          {'email': email.text.trim(), 'purpose': 'register'},
+        );
+        if (!mounted) return;
+        verificationToken = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationScreen(
+              api: widget.api,
+              email: email.text.trim(),
+              purpose: 'register',
+              challenge: Map<String, dynamic>.from(data),
+            ),
+          ),
+        );
+        if (verificationToken == null) return;
+      }
       await widget.api.authenticate({
         'name': name.text.trim(),
         'email': email.text.trim(),
         'password': password.text,
+        'verificationToken': ?verificationToken,
       }, register: register);
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
@@ -127,9 +151,24 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 15),
+                  if (!register)
+                    Center(
+                      child: TextButton(
+                        onPressed: busy
+                            ? null
+                            : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      PasswordResetScreen(api: widget.api),
+                                ),
+                              ),
+                        child: const Text('Forgot password?'),
+                      ),
+                    ),
                   Text(
                     register
-                        ? 'Create your student account and start learning.'
+                        ? 'Create your student account. We’ll email a code to verify your address first.'
                         : 'Sign in for your courses, assignments, and feedback.',
                     style: const TextStyle(
                       color: muted,

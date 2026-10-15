@@ -12,7 +12,8 @@ import {
 import { useAuth } from "./auth";
 import { api, message } from "./api";
 import { Brand } from "./Shell";
-import { Button, Field } from "./ui";
+import { Button, Field, Modal } from "./ui";
+import EmailVerification from "./EmailVerification";
 import { passwordRequirements, validateAuth } from "./auth-validation";
 
 const emptyValues = { name: "", email: "", password: "", inviteCode: "" };
@@ -27,6 +28,17 @@ export default function AuthPage({ register = false }) {
   const [values, setValues] = useState(emptyValues);
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [challenge, setChallenge] = useState(null),
+    [proof, setProof] = useState(null);
+  async function complete(values, token) {
+    const { data } = await api.post("/auth/register", {
+      ...values,
+      role,
+      verificationToken: token,
+    });
+    setUser(data.user);
+    navigate("/", { replace: true });
+  }
   const errors = validateAuth(values, { register, role });
   const fieldError = (name) =>
     touched[name] || submitted ? errors[name] || "" : "";
@@ -62,6 +74,18 @@ export default function AuthPage({ register = false }) {
     }
     setBusy(true);
     try {
+      if (register) {
+        if (proof?.email === values.email.trim().toLowerCase())
+          await complete(values, proof.token);
+        else {
+          const { data } = await api.post("/auth/email-otp/request", {
+            email: values.email,
+            purpose: "register",
+          });
+          setChallenge(data);
+        }
+        return;
+      }
       const { data } = await api.post(
         `/auth/${register ? "register" : "login"}`,
         register ? { ...values, role } : values,
@@ -69,6 +93,7 @@ export default function AuthPage({ register = false }) {
       setUser(data.user);
       navigate("/", { replace: true });
     } catch (e) {
+      if (/verification expired|already used/i.test(message(e))) setProof(null);
       setError(message(e));
     } finally {
       setBusy(false);
@@ -182,6 +207,11 @@ export default function AuthPage({ register = false }) {
               required
               maxLength={160}
               placeholder="you@school.edu"
+              hint={
+                register
+                  ? "We’ll email a code to verify this address before creating your account."
+                  : undefined
+              }
               {...bindField("email")}
               error={fieldError("email")}
             />
@@ -272,6 +302,28 @@ export default function AuthPage({ register = false }) {
               <ArrowRight size={18} />
             </Button>
           </form>
+          {!register && (
+            <p className="auth-switch">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </p>
+          )}
+          {challenge && (
+            <Modal title="Verify your email" onClose={() => setChallenge(null)}>
+              <EmailVerification
+                email={values.email.trim().toLowerCase()}
+                purpose="register"
+                initialChallenge={challenge}
+                onBack={() => setChallenge(null)}
+                onVerified={async (data) => {
+                  setProof({
+                    email: values.email.trim().toLowerCase(),
+                    token: data.verificationToken,
+                  });
+                  await complete(values, data.verificationToken);
+                }}
+              />
+            </Modal>
+          )}
           <div className="auth-switch">
             {register ? "Already have an account?" : "New around here?"}{" "}
             <Link to={register ? "/login" : "/register"}>

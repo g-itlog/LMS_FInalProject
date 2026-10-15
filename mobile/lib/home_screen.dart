@@ -3,6 +3,7 @@ import 'api.dart';
 import 'widgets.dart';
 import 'course_screen.dart';
 import 'profile_screen.dart';
+import 'inbox_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final LmsApi api;
@@ -78,6 +79,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Inbox',
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => InboxScreen(api: widget.api)),
+            );
+            if (mounted) setState(refreshData);
+          },
+        ),
         IconButton(
           onPressed: () => setState(() => tab = 4),
           tooltip: 'My profile',
@@ -313,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       possible > 0
                           ? '${(earned * 100 / possible).round()}%'
                           : '—',
-                      'Overall grade',
+                      'Assignment average',
                     ),
                   ),
                 ],
@@ -616,6 +628,12 @@ class _HomeScreenState extends State<HomeScreen> {
           (filter == 'all' ||
               filter == 'graded' && s?['grade'] != null ||
               filter == 'todo' && s == null ||
+              filter == 'upcoming' &&
+                  s == null &&
+                  DateTime.parse(a['dueDate']).isAfter(DateTime.now()) ||
+              filter == 'overdue' &&
+                  s == null &&
+                  DateTime.parse(a['dueDate']).isBefore(DateTime.now()) ||
               filter == 'pending' && s != null && s['grade'] == null);
     }).toList();
     return ListView(
@@ -641,6 +659,8 @@ class _HomeScreenState extends State<HomeScreen> {
               for (final entry in {
                 'all': 'All',
                 'todo': 'To do',
+                'upcoming': 'Upcoming',
+                'overdue': 'Overdue',
                 'pending': 'Submitted',
                 'graded': 'Graded',
               }.entries)

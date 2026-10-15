@@ -1,19 +1,19 @@
 # Validation report
 
-Verification date: **15 October 2026 (Asia/Singapore)**.
+Verification date: **16 October 2026 (Asia/Singapore)**. The server, web, and Flutter checks below were rerun for the learning expansion plus SMTP OTP registration and password recovery. Native-testing limitations remain explicit.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| API, startup, provisioning, invitations, and Vercel adapter tests | **51 passed** | Original teaching workflows plus admin role isolation, secure provisioning, suspension/session revocation, history protection, publication, audit logs, transactional single-use invitations, and Vercel rewrite query normalization |
+| API, startup, provisioning, invitations, analytics, and Vercel adapter tests | **88 passed** | Original workflows plus admin permissions, provisioning, suspension, history protection, publication, audit logs, single-use invitations, report calculations/exports, and Vercel rewrite query normalization |
 | React production build | **Passed** | Vite compiles deployable assets in client/dist |
 | Vercel configuration check | **Passed locally** | Repository-root config, shared Express function, API-first routing, output directory, 3 MB limit |
 | React lint | **Passed** | Source and test linting; generated Playwright reports are excluded |
 | Web authentication validation unit tests | **5 passed** | Required fields, email rules, registration strength and UTF-8 limits, login compatibility, instructor-code presence |
-| Browser end-to-end tests | **13 passed** | Real Edge workflows for admins, invitation codes, students, instructors, login/registration validation, publication, grading, uploads, keyboard controls, and phone layouts |
-| Flutter tests | **21 passed** | Existing student/API/rendering tests plus live validation, password rules, mode reset, and narrow-phone large-text checks |
-| Flutter analysis | **Passed ? no issues** | Latest student authentication source and tests |
+| Browser end-to-end tests | **21 passed** | Real Edge workflows for admins, reports/charts/CSV downloads, invitations, students, instructors, validation, publication, grading, uploads, keyboard controls, and phone layouts |
+| Flutter tests | **30 passed** | Existing student/API/rendering tests plus live validation, password rules, mode reset, and narrow-phone large-text checks |
+| Flutter analysis | **Passed ? no issues** | Latest student learning/authentication source and tests |
 | Flutter browser build | **Passed for current student source** | JavaScript browser preview; a browser build does not verify Android/iOS plugins |
-| Hosted admin deployment | **Routing fix requires user deployment** | Admin login verified; the reported directory 400 errors were reproduced live. The fix is verified locally and awaits the user's GitHub push/Vercel deployment. A production administrator was provisioned privately at the owner's request |
+| Hosted feature deployment | **Requires user deployment** | The expanded web/backend/Flutter source is verified locally; this update has not been pushed or deployed by the assistant. Email verification/recovery additionally requires private SMTP settings and a real inbox delivery check |
 | Android APK/device execution | **Not verified** | Android SDK/emulator/device setup is still required |
 | iOS build/device execution | **Not verified** | Requires macOS, Xcode, and signing |
 
@@ -30,6 +30,10 @@ The provisioning command is executed against an isolated database and private te
 Nine invitation tests verify admin-only access, secure generation and custom codes, multiple simultaneously active single-use codes, replacement/deactivation/reactivation before use, retained access for existing instructors, environment migration without resurrection, operation without the environment variable after migration, invalid/duplicate input handling, and activity-log secrecy. Successful registration removes the code from the unused list and deletes its plaintext value. Used receipts cannot be edited, reactivated, or recreated with the same value. A concurrent test using two different instructor emails proves only one account is created. A forced duplicate-email insertion inside the transaction proves failure rolls back code consumption and its audit event. Historical multi-use records with previous successful uses are retired on migration. These tests and the instructor registration/browser fixtures use isolated MongoDB replica sets, matching Atlas transaction support.
 
 ## Browser coverage
+
+Seven analytics API/calculation tests verify Philippine midnight boundaries, inclusive end dates, zero-filled dates, zero grades, weighted rather than simple-average scores, archived-course exclusion, unpublished-course inclusion, current enrollment counts versus period activity, resubmission semantics, missing assessment totals, search/pagination independence, complete CSV exports, spreadsheet-formula escaping, strict query validation, and admin-only access. No personal account fields are exposed in report output.
+
+Two added browser workflows verify the new report page, preset/custom dates, exact chart values against the API, keyboard date selection, course search without losing focus, course/daily CSV contents, empty periods, invalid range errors, API-error retry, and failed CSV messages followed by successful download retry. The responsive admin workflow also covers Reports at 1440px, 768px, 390px, and 320px and records desktop/phone screenshots. Student navigation excludes reports and rejects direct access to the report route.
 
 Five admin workflows cover all admin pages and profile at 1440px, 768px, 390px, and 320px; narrow account/course modals; user creation/editing/suspension/reactivation; protected administrator accounts; searchable logs; course inspection/publication; student route exclusion; invitation creation/copy/edit/deactivation/reactivation before use; successful instructor signup; disappearance from the unused list; read-only used history without code/copy/edit controls; and rejection of a second instructor using the consumed code.
 
@@ -57,3 +61,31 @@ Flutter screenshots are widget-renderer output with demo fixtures, not emulator 
 ## Reproducibility
 
 Use npm --prefix server test, npm --prefix client test, npm --prefix client run test:e2e, npm --prefix client run lint, npm run build, and flutter test --no-pub in mobile. API/browser tests use isolated databases; the new tests do not modify Atlas. Private provisioning credentials, environment files, dependencies, and caches are excluded from the source ZIP. Existing dependency audit results predate this admin addition; no new dependency was added by the admin implementation.
+
+## Learning feature expansion verification
+
+Eight isolated replica-set API tests cover quiz ownership/enrollment/role checks, private answer keys, forged-score rejection, exact answer validation, concurrent attempts across web cookies and mobile bearer tokens, zero and weighted scores, locked questions, revisions, closing dates, after-close review, best scores, shared completion marks, assignment participation, inbox audience restrictions, changed announcements/deadlines, read-state synchronization, notification pagination, school message deletion, enrollment monitoring, course metadata validation/archive/restore, learning analytics, and attributed logs without credentials or answer keys. Repeated quiz attempts and completion requests do not inflate progress.
+
+Two additional Edge workflows exercise instructor quiz creation/question editing, student taking/scoring/permitted review at 320px, lecture completion, instructor results/progress, targeted school announcements, durable inbox read state, enrollment search, admin course edits, and new administration pages at 1440/768/390/320px. New screenshots show student quiz/progress, instructor progress, and enrollment monitoring. All 19 browser workflows pass together against the Vercel rewrite fixture.
+
+Four new Flutter tests exercise actual HTTP-client serialization of selected answers and revision, score and permitted-review rendering, restricted answer review, lecture completion and undo with progress refresh, inbox read state, and failed-inbox retry at 320px. All 30 Flutter tests pass. Flutter analysis is clean; the JavaScript browser build succeeds with the deployed HTTPS API base configured. The installed secure-storage plugin produces a WebAssembly compatibility warning during the optional dry run; no WebAssembly target is claimed. No Android/iOS device run is claimed.
+
+See [LEARNING_GUIDE.md](LEARNING_GUIDE.md) for exact student parity, progress definitions, notification behavior, and manual cross-device acceptance checks.
+
+## SMTP OTP and recovery verification
+
+Twelve added backend tests cover strict email/purpose/code inputs, mandatory registration proof, 10-minute expiry, keyed code storage, five-guess lockout, resends and persistent rate limits, wrong-purpose/email grants, one-time and concurrent verification, delivery failures without credential exposure, transactional instructor invitations, generic reset responses, student-only mobile eligibility, strong passwords, reset replay/concurrency, session revocation, and invalidation after admin email changes. Existing registration fixtures seed verified grants; the dedicated suite exercises request/verify/consume endpoints with fake mail delivery.
+
+Two additional Edge flows verify code-gated account creation, wrong/short codes, resend cooldown, forgot-password navigation, code verification before new-password entry, live password/confirmation validation, old-password rejection and new-password login at phone width. Existing instructor invitation browser tests now complete email verification first. Two added Flutter tests verify OTP errors/resend timing and the complete student recovery form; existing registration tests exercise request/verify/register sequencing. A test clock controls only the UI resend timer; the backend enforces actual expiry/cooldown independently.
+
+Latest rerun on 16 October 2026: 88 server tests, 30 Flutter tests, and 5 React validation tests passed. All 21 browser scenarios passed across the initial run and one targeted rerun: the first admin layout check encountered a missing dist/index.html while a concurrent production build replaced that directory; it passed after the build finished. Run builds before browser tests. Web lint/build, Vercel configuration checks, and Flutter analysis passed. Flutter browser compilation had passed in the preceding feature verification; it was not repeated for the private SMTP configuration change.
+
+Brevo SMTP connection, TLS, and authentication passed using the private local configuration. This check sent no email and does not verify the sender or inbox delivery. Actual registration/recovery emails, Vercel environment setup/redeployment, and native Android/iOS execution still require acceptance checks. Existing account/database passwords were not changed, and this update has not been pushed/deployed. Follow EMAIL_SETUP.md for provider and hosted inbox acceptance checks.
+
+## Deadline extension verification
+
+Ten new isolated replica-set API tests verify strict reason/date/body validation, student enrollment and course ownership, one pending request under concurrent web/mobile submissions, original/current/requested deadline snapshots, instructor-only pending notices, rejection comments and unchanged deadlines, one-student approval without changing classmates, dashboard/course/mobile effective deadline parity, actual text/file upload under the approved deadline, late classification and submission-time deadline snapshots, whole-class approval for current/future enrollments, protection of longer individual grants, privacy of reasons/comments, competing decisions, graded-work locking, stale requests, status filtering/history pagination, assignment cleanup, archival access denial, and audit privacy.
+
+Two new Edge workflows verify a 320px request/history dialog, invalid reasons, instructor inbox links, rejection comments, subsequent individual approval and submission reopening, explicit whole-class confirmation, and a second student receiving the class deadline without private request details. Three new Flutter tests verify reason/date validation, native date/time picker selection and UTC serialization, pending/rejected history with comments, and refreshing an approved individual deadline when returning to the submission form.
+
+The complete suite passes: 88 backend tests, 21 browser workflows, 30 Flutter tests and 5 React validation tests. Web production build/lint, Flutter analysis and JavaScript browser compilation pass. Screenshots and source/documentation packages are refreshed. No production learning records were modified and no commit/push/deployment was performed. Android/iOS physical-device verification remains unclaimed. See DEADLINE_EXTENSIONS.md for user instructions and manual acceptance checks.

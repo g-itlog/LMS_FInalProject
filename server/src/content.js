@@ -5,6 +5,8 @@ import { fail, id, role } from "./security.js";
 import { schemas, validate } from "./validation.js";
 import { requireCourse } from "./courses.js";
 import { MAX_ATTACHMENT_BYTES } from "./limits.js";
+import { audit } from "./audit.js";
+import { studentAssignments, effectiveDeadline } from "./deadlines.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -104,6 +106,13 @@ export function contentRoutes(db, bucket) {
           updatedAt: new Date(),
         };
         const result = await collection.insertOne(record);
+        await audit(
+          db,
+          req.user,
+          `${type}.created`,
+          record,
+          "Created course content.",
+        );
         res.status(201).json({ ...record, _id: result.insertedId });
       },
     );
@@ -126,6 +135,13 @@ export function contentRoutes(db, bucket) {
         { _id: record._id },
         { $set: { ...data, updatedAt: new Date() } },
       );
+      await audit(
+        db,
+        req.user,
+        `${type}.updated`,
+        record,
+        "Updated course content.",
+      );
       res.json({ ...record, ...data });
     });
     router.delete(
@@ -146,8 +162,21 @@ export function contentRoutes(db, bucket) {
           await db
             .collection("lms_submissions")
             .deleteMany({ assignmentId: record._id });
+          await db
+            .collection("lms_extension_requests")
+            .deleteMany({ assignmentId: record._id });
+          await db
+            .collection("lms_assignment_deadlines")
+            .deleteMany({ assignmentId: record._id });
         }
         await collection.deleteOne({ _id: record._id });
+        await audit(
+          db,
+          req.user,
+          `${type}.deleted`,
+          record,
+          "Deleted course content.",
+        );
         res.json({ message: "Record deleted." });
       },
     );
@@ -179,13 +208,21 @@ export function contentRoutes(db, bucket) {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      let result;
       try {
-        const result = await db.collection("lms_materials").insertOne(record);
-        res.status(201).json({ ...record, _id: result.insertedId });
+        result = await db.collection("lms_materials").insertOne(record);
       } catch (error) {
         await removeFile(bucket, file);
         throw error;
       }
+      await audit(
+        db,
+        req.user,
+        "material.created",
+        record,
+        "Added a learning material.",
+      );
+      res.status(201).json({ ...record, _id: result.insertedId });
     },
   );
   router.patch(
@@ -221,6 +258,13 @@ export function contentRoutes(db, bucket) {
         throw error;
       }
       if (req.file) await removeFile(bucket, record.file);
+      await audit(
+        db,
+        req.user,
+        "material.updated",
+        record,
+        "Updated a learning material.",
+      );
       res.json({ ...record, ...data, file });
     },
   );
@@ -235,6 +279,13 @@ export function contentRoutes(db, bucket) {
       await requireCourse(db, req.user, record.courseId, true);
       await db.collection("lms_materials").deleteOne({ _id: record._id });
       await removeFile(bucket, record.file);
+      await audit(
+        db,
+        req.user,
+        "material.deleted",
+        record,
+        "Deleted a learning material.",
+      );
       res.json({ message: "Material deleted." });
     },
   );
@@ -247,14 +298,23 @@ export function contentRoutes(db, bucket) {
         .findOne({ _id: id(req.params.assignmentId) });
       if (!assignment) fail(404, "Assignment not found.");
       await requireCourse(db, req.user, assignment.courseId);
-      if (!assignment.allowLate && new Date() > assignment.dueDate)
+      const mine = (
+        await studentAssignments(db, [assignment], req.user._id)
+      )[0];
+      if (!mine.allowLate && new Date() > mine.dueDate)
         fail(400, "The submission deadline has passed.");
       req.assignment = assignment;
       next();
     },
     upload,
     async (req, res) => {
-      const assignment = req.assignment;
+      let assignment = await db
+        .collection("lms_assignments")
+        .findOne({ _id: req.assignment._id });
+      if (!assignment) fail(404, "Assignment not found.");
+      assignment = (
+        await studentAssignments(db, [assignment], req.user._id)
+      )[0];
       const data = validate(schemas.submission, req.body);
       if (!assignment.allowLate && new Date() > assignment.dueDate)
         fail(400, "The submission deadline has passed.");
@@ -270,17 +330,28 @@ export function contentRoutes(db, bucket) {
       const file = req.file
         ? await saveFile(bucket, req.file, req.user)
         : existing?.file || null;
-      const record = {
-        ...data,
-        file,
-        courseId: assignment.courseId,
-        submittedAt: new Date(),
-        late: new Date() > assignment.dueDate,
-        grade: null,
-        feedback: "",
-        gradedAt: null,
-      };
+      let record;
       try {
+        const latest = await db
+          .collection("lms_assignments")
+          .findOne({ _id: assignment._id });
+        if (!latest) fail(404, "Assignment not found.");
+        await requireCourse(db, req.user, latest.courseId);
+        assignment = (await studentAssignments(db, [latest], req.user._id))[0];
+        const submittedAt = new Date();
+        if (!assignment.allowLate && submittedAt > assignment.dueDate)
+          fail(400, "The submission deadline has passed.");
+        record = {
+          ...data,
+          file,
+          courseId: assignment.courseId,
+          submittedAt,
+          late: submittedAt > assignment.dueDate,
+          deadlineAtSubmission: assignment.dueDate,
+          grade: null,
+          feedback: "",
+          gradedAt: null,
+        };
         if (existing) {
           const result = await db
             .collection("lms_submissions")
@@ -299,6 +370,15 @@ export function contentRoutes(db, bucket) {
         throw error;
       }
       if (req.file && existing?.file) await removeFile(bucket, existing.file);
+      await audit(
+        db,
+        req.user,
+        "assignment.submitted",
+        assignment,
+        existing
+          ? "Updated assignment submission."
+          : "Submitted an assignment.",
+      );
       res.status(existing ? 200 : 201).json({
         message: existing ? "Submission updated." : "Assignment submitted.",
       });
@@ -330,7 +410,20 @@ export function contentRoutes(db, bucket) {
           { $project: { "student.passwordHash": 0, "student.password": 0 } },
         ])
         .toArray();
-      res.json({ assignment, items });
+      const deadlines = await db
+        .collection("lms_assignment_deadlines")
+        .find({ assignmentId: assignment._id })
+        .toArray();
+      res.json({
+        assignment,
+        items: items.map((row) => ({
+          ...row,
+          effectiveDueDate: effectiveDeadline(
+            assignment,
+            deadlines.find((item) => item.studentId.equals(row.studentId)),
+          ),
+        })),
+      });
     },
   );
   router.patch(
@@ -355,6 +448,13 @@ export function contentRoutes(db, bucket) {
           { _id: submission._id },
           { $set: { ...data, gradedAt: new Date(), gradedBy: req.user._id } },
         );
+      await audit(
+        db,
+        req.user,
+        "assignment.graded",
+        assignment,
+        "Saved a grade and written feedback.",
+      );
       res.json({ message: "Grade and feedback saved." });
     },
   );

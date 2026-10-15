@@ -1,5 +1,6 @@
 import { connectDatabase } from "./database.js";
 import { createApp } from "./app.js";
+import { smtpConfig } from "./mail.js";
 
 function removeVercelRouteParameter(req) {
   // /api/:path* -> /api reserves `path` as routing metadata, not an API filter.
@@ -41,6 +42,7 @@ export function readRuntimeConfig(env = process.env) {
   }
   return {
     secret,
+    smtp: smtpConfig(env),
     production,
     inviteCode: env.INSTRUCTOR_INVITE_CODE,
     trustProxy: env.TRUST_PROXY === "1" || env.VERCEL === "1",
