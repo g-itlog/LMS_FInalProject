@@ -135,7 +135,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: AuthScreen(api: api)));
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
-      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      expect(find.text('Enter your email address.'), findsOneWidget);
       expect(find.text('Enter your password.'), findsOneWidget);
       await tester.ensureVisible(
         find.text('New here? Create a student account'),

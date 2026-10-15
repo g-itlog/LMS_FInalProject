@@ -1,0 +1,372 @@
+import { test, expect } from "@playwright/test";
+import path from "node:path";
+
+async function login(page, email = "admin@classroom.test") {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill("Classroom2026!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: email.startsWith("admin") ? "School overview" : /Hello,/,
+    }),
+  ).toBeVisible();
+}
+test("administrator overview and every admin page fit desktop, tablet, and phone", async ({
+  page,
+}) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await login(page);
+  await expect(page.getByText("Admin workspace")).toBeVisible();
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const route of [
+      "/",
+      "/admin/users",
+      "/admin/courses",
+      "/admin/invitations",
+      "/admin/activity",
+      "/profile",
+    ]) {
+      await page.goto(route);
+      await expect(page.locator("main h1")).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${route} at ${width}px`,
+      ).toBe(true);
+      if (width === 320 && ["/admin/users", "/admin/courses"].includes(route)) {
+        await page
+          .getByRole("button", {
+            name: route.endsWith("users")
+              ? /^View account for/
+              : /^View course/,
+          })
+          .first()
+          .click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog.locator(".admin-counts")).toBeVisible();
+        expect(
+          await dialog.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth,
+          ),
+        ).toBe(true);
+        await dialog.getByRole("button", { name: "Close dialog" }).click();
+      }
+      if ([1440, 390].includes(width) && route === "/")
+        await page.screenshot({
+          path: path.resolve(
+            `../docs/screenshots/web-admin-${width === 1440 ? "dashboard" : "phone"}.png`,
+          ),
+          fullPage: true,
+          animations: "disabled",
+        });
+      if (width === 1440 && route === "/admin/users")
+        await page.screenshot({
+          path: path.resolve("../docs/screenshots/web-admin-users.png"),
+          fullPage: true,
+          animations: "disabled",
+        });
+      if (width === 1440 && route === "/admin/courses")
+        await page.screenshot({
+          path: path.resolve("../docs/screenshots/web-admin-courses.png"),
+          fullPage: true,
+          animations: "disabled",
+        });
+      if (width === 1440 && route === "/admin/invitations")
+        await page.screenshot({
+          path: path.resolve("../docs/screenshots/web-admin-invitations.png"),
+          fullPage: true,
+          animations: "disabled",
+        });
+    }
+  }
+  await page.goto("/courses");
+  await expect(
+    page.getByRole("heading", { name: "School overview" }),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("admin can create, search, edit, suspend, and reactivate accounts with audited actions", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/users");
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  const create = page.getByRole("dialog", { name: "Create an account" });
+  await create.getByLabel("Full name").fill("Browser Test Student");
+  await create
+    .getByLabel("Email address")
+    .fill("browser-admin-user@example.edu");
+  await create.getByLabel("Department").fill("Computer Studies");
+  await create.getByLabel("Initial password").fill("Password2026!");
+  await create
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  await expect(create).toHaveCount(0);
+  await page.getByRole("searchbox").fill("browser-admin-user@example.edu");
+  await expect(
+    page.getByRole("heading", { name: "Browser Test Student" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "View account for Browser Test Student" })
+    .click();
+  const account = page.getByRole("dialog", { name: "Account details" });
+  await account.getByLabel("Full name").fill("Updated Browser User");
+  await account.getByLabel("Account role").selectOption("instructor");
+  await account.getByRole("button", { name: "Save changes" }).click();
+  await expect(account).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Updated Browser User" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "View account for Updated Browser User" })
+    .click();
+  await account
+    .getByRole("button", { name: "Suspend account", exact: true })
+    .click();
+  const suspend = page.getByRole("dialog", { name: "Suspend this account?" });
+  await suspend
+    .getByRole("button", { name: "Suspend account", exact: true })
+    .click();
+  await expect(account).toHaveCount(0);
+  await expect(
+    page.locator(".admin-user-row").getByText("Suspended", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "View account for Updated Browser User" })
+    .click();
+  await account
+    .getByRole("button", { name: "Reactivate account", exact: true })
+    .click();
+  const reactivate = page.getByRole("dialog", {
+    name: "Reactivate this account?",
+  });
+  await reactivate
+    .getByRole("button", { name: "Reactivate account", exact: true })
+    .click();
+  await expect(account).toHaveCount(0);
+  await expect(
+    page.locator(".admin-user-row").getByText("Active", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("searchbox").fill("Morgan Reyes");
+  await page
+    .getByRole("button", { name: "View account for Morgan Reyes" })
+    .click();
+  await expect(
+    account.getByText(/Administrator accounts are protected/),
+  ).toBeVisible();
+  await expect(
+    account.getByRole("button", { name: "Suspend account", exact: true }),
+  ).toHaveCount(0);
+  await account.getByRole("button", { name: "Close dialog" }).click();
+  await page.goto("/admin/activity");
+  await page.getByRole("searchbox").fill("Browser");
+  await expect(
+    page.getByText("Account created", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/status: active → suspended/)).toBeVisible();
+  await expect(page.getByText(/status: suspended → active/)).toBeVisible();
+});
+
+test("admin can inspect courses and control publication without taking over teaching", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/courses");
+  await page.getByRole("searchbox").fill("IT 301");
+  await expect(
+    page.getByRole("button", { name: "View course IT 301", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "View course IT 301", exact: true })
+    .click();
+  const details = page.getByRole("dialog", { name: "Course overview" });
+  await expect(
+    details.getByText("Full-Stack Web Development", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    details.getByRole("heading", { name: /Recent submissions/ }),
+  ).toBeVisible();
+  await details.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("button", { name: "Unpublish IT 301", exact: true })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Unpublish IT 301?" })
+    .getByRole("button", { name: "Unpublish course" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Publish IT 301", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Publish IT 301", exact: true })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Publish IT 301?" })
+    .getByRole("button", { name: "Publish course" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Unpublish IT 301", exact: true }),
+  ).toBeVisible();
+});
+
+test("student routes cannot enter the administration workspace", async ({
+  page,
+}) => {
+  await login(page, "student@classroom.test");
+  await page.goto("/admin/users");
+  await expect(page.getByRole("heading", { name: /Hello,/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Users", exact: true }),
+  ).toHaveCount(0);
+});
+
+test("admin manages single-use invitations and successful signup permanently consumes the code", async ({
+  page,
+  browser,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await login(page);
+  await page.goto("/admin/invitations");
+  await page
+    .getByRole("button", { name: "Create invitation", exact: true })
+    .click();
+  const create = page.getByRole("dialog", {
+    name: "Create invitation",
+    exact: true,
+  });
+  await create
+    .getByLabel("Invitation label")
+    .fill("Browser faculty invitation");
+  await create
+    .getByRole("button", { name: "Create invitation", exact: true })
+    .click();
+  await expect(create).toHaveCount(0);
+  const card = page
+    .locator("article")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "Browser faculty invitation",
+        exact: true,
+      }),
+    });
+  const code = await card.locator("code").innerText();
+  expect(code).toMatch(/^[A-Za-z0-9_-]{24}$/);
+  await card
+    .getByRole("button", {
+      name: "Copy invitation code for Browser faculty invitation",
+    })
+    .click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+  await card
+    .getByRole("button", {
+      name: "Deactivate invitation Browser faculty invitation",
+    })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Deactivate this invitation?" })
+    .getByRole("button", { name: "Deactivate invitation", exact: true })
+    .click();
+  await expect(card.getByText("Inactive", { exact: true })).toBeVisible();
+
+  const teacherContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  async function registrationForm(target, email) {
+    await target.goto("http://127.0.0.1:8001/register");
+    await target.getByRole("button", { name: /instructor/ }).click();
+    await target.getByLabel("Full name").fill("Invited Browser Instructor");
+    await target.getByLabel("Email address").fill(email);
+    await target.getByLabel("Password", { exact: true }).fill("Password2026!");
+  }
+  async function submit(target, expectedStatus) {
+    const response = target.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/auth/register") &&
+        r.request().method() === "POST",
+    );
+    await target
+      .getByRole("button", { name: "Create account", exact: true })
+      .click();
+    expect((await response).status()).toBe(expectedStatus);
+  }
+  try {
+    const teacher = await teacherContext.newPage();
+    await registrationForm(teacher, "browser-invited@example.edu");
+    await teacher.getByLabel("Instructor invitation code").fill(code);
+    await submit(teacher, 403);
+    await expect(teacher.getByRole("alert")).toContainText(
+      "valid instructor invitation code",
+    );
+
+    await card
+      .getByRole("button", {
+        name: "Edit invitation Browser faculty invitation",
+      })
+      .click();
+    const edit = page.getByRole("dialog", {
+      name: "Edit invitation",
+      exact: true,
+    });
+    await edit
+      .getByLabel("Replacement code (optional)")
+      .fill("BrowserFacultyReplacement2026");
+    await edit.getByRole("button", { name: "Save invitation" }).click();
+    await expect(edit).toHaveCount(0);
+    await expect(card.getByText("Inactive", { exact: true })).toBeVisible();
+    await card
+      .getByRole("button", {
+        name: "Reactivate invitation Browser faculty invitation",
+      })
+      .click();
+    await page
+      .getByRole("dialog", { name: "Reactivate this invitation?" })
+      .getByRole("button", { name: "Reactivate invitation", exact: true })
+      .click();
+    await expect(card.getByText("Active", { exact: true })).toBeVisible();
+    await submit(teacher, 403);
+    await teacher
+      .getByLabel("Instructor invitation code")
+      .fill("BrowserFacultyReplacement2026");
+    await submit(teacher, 201);
+    await expect(
+      teacher.getByRole("heading", { name: /Hello,/ }),
+    ).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Invitation codes", exact: true }),
+    ).toBeVisible();
+    await expect(card).toHaveCount(0);
+    await page.getByLabel("Filter invitation status").selectOption("used");
+    await expect(card.getByText("Used", { exact: true })).toBeVisible();
+    await expect(
+      card.getByText(/cannot be reused or reactivated/),
+    ).toBeVisible();
+    await expect(card.locator("code")).toHaveCount(0);
+    await expect(card.getByRole("button")).toHaveCount(0);
+
+    const guest = await guestContext.newPage();
+    await registrationForm(guest, "browser-invited-second@example.edu");
+    await guest
+      .getByLabel("Instructor invitation code")
+      .fill("BrowserFacultyReplacement2026");
+    await submit(guest, 403);
+    await expect(guest.getByRole("alert")).toContainText(
+      "valid instructor invitation code",
+    );
+    await teacher.reload();
+    await expect(
+      teacher.getByRole("heading", { name: /Hello,/ }),
+    ).toBeVisible();
+  } finally {
+    await teacherContext.close();
+    await guestContext.close();
+  }
+});

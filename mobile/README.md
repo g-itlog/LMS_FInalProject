@@ -4,6 +4,8 @@ This is the **student-only** Flutter Android/iOS app, with a browser preview, fo
 
 Implemented: student registration/login, dashboard statistics, enrolled courses and catalog enrollment, material links and authenticated downloads, assignment instructions/deadlines, file and text submissions, grades and instructor feedback, announcements, profile/password updates, and server-revoked logout.
 
+Login and registration validate edited fields as you type. Registration includes a live password checklist and enforces the API's 72-byte UTF-8 limit. Invalid submissions focus the first invalid field; switching between forms clears credentials and validation. Mobile registration remains student-only. Password and account verification happens on submission against the shared API.
+
 For the Vercel deployment, rebuild with `--dart-define=API_BASE_URL=https://YOUR-SITE.vercel.app/api`. The website and API share that deployment; Atlas stores the data and files. Attachments are limited to 3 MB in both clients and the backend. Follow [the deployment walkthrough](../docs/DEPLOYMENT_WALKTHROUGH.md) for the exact hosting settings.
 
 ## Run on this PC now (Chrome or Edge)

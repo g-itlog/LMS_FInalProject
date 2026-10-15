@@ -27,6 +27,21 @@ export async function connectDatabase(
       db.collection("lms_assignments").createIndex({ courseId: 1, dueDate: 1 }),
       db.collection("lms_materials").createIndex({ courseId: 1 }),
       db
+        .collection("lms_users")
+        .createIndex({ role: 1, status: 1, createdAt: -1 }),
+      db
+        .collection("lms_admin_activity")
+        .createIndex({ createdAt: -1, _id: -1 }),
+      db
+        .collection("lms_invitations")
+        .createIndex({ codeHash: 1 }, { unique: true }),
+      db
+        .collection("lms_invitations")
+        .createIndex({ source: 1 }, { unique: true, sparse: true }),
+      db
+        .collection("lms_invitations")
+        .createIndex({ useCount: 1, active: 1, createdAt: -1 }),
+      db
         .collection("lms_announcements")
         .createIndex({ courseId: 1, createdAt: -1 }),
     ]);

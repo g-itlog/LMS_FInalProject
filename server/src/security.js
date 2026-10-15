@@ -23,13 +23,11 @@ export const cookieOptions = (production) => ({
 });
 export async function startSession(db, res, user, config, mobile = false) {
   const sessionId = randomUUID();
-  await db
-    .collection("lms_sessions")
-    .insertOne({
-      _id: sessionId,
-      userId: user._id,
-      expiresAt: new Date(Date.now() + 86400000),
-    });
+  await db.collection("lms_sessions").insertOne({
+    _id: sessionId,
+    userId: user._id,
+    expiresAt: new Date(Date.now() + 86400000),
+  });
   const token = jwt.sign(
     { sub: user._id.toString(), jti: sessionId },
     config.secret,
@@ -68,13 +66,11 @@ export function authenticate(db, config) {
           .status(401)
           .json({ message: "Your session expired. Please sign in again." });
       }
-      const session = await db
-        .collection("lms_sessions")
-        .findOne({
-          _id: claims.jti,
-          userId: id(claims.sub),
-          expiresAt: { $gt: new Date() },
-        });
+      const session = await db.collection("lms_sessions").findOne({
+        _id: claims.jti,
+        userId: id(claims.sub),
+        expiresAt: { $gt: new Date() },
+      });
       if (!session)
         return res
           .status(401)
@@ -82,7 +78,7 @@ export function authenticate(db, config) {
       req.user = await db
         .collection("lms_users")
         .findOne({ _id: id(claims.sub) });
-      if (!req.user)
+      if (!req.user || req.user.status === "suspended")
         return res.status(401).json({ message: "Account unavailable." });
       if (bearer && req.user.role !== "student")
         return res

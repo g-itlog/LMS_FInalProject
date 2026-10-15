@@ -1580,6 +1580,10 @@ textarea.form-control {
 .password-field .form-control {
   padding-right: 43px;
 }
+/* Keep Edge's built-in reveal button from duplicating our password toggle. */
+.password-field .form-control::-ms-reveal {
+  display: none;
+}
 .password-field > .icon-btn {
   position: absolute;
   right: 7px;

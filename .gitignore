@@ -9,6 +9,7 @@ playwright-report/
 *.log
 .cache/
 .local-credentials.txt
+.local-admin-credentials.txt
 backup/
 mobile/build/
 mobile/.dart_tool/

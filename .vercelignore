@@ -11,4 +11,5 @@ client/playwright-report/
 **/.env
 **/.env.*
 **/.local-credentials.txt
+**/.local-admin-credentials.txt
 **/*.log

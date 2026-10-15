@@ -1,10 +1,12 @@
 # Knowhere to Grow
 
-A learning management system for students and instructors, built with **MongoDB, Express, React, and Node.js**, plus a **Flutter student app**. The web and mobile apps use the same backend and records.
+A learning management system for students, instructors, and web administrators, built with **MongoDB, Express, React, and Node.js**, plus a **Flutter student app**. The web and mobile apps use the same backend and records. Administrator access is web-only.
 
 Source repository: [g-itlog/LMS_FInalProject](https://github.com/g-itlog/LMS_FInalProject). See [GitHub and deployment notes](docs/GITHUB_AND_DEPLOYMENT.md) before importing the project into Vercel, including API routing, private environment variables, and the attachment-size limit.
 
 Deploy the website and API together in one Vercel project using the [deployment walkthrough](docs/DEPLOYMENT_WALKTHROUGH.md). Set Root Directory to the repository root (`.`), use the checked-in `vercel.json`, and run `npm run deploy:check` before pushing. MongoDB Atlas stores records and GridFS attachments; the attachment limit is 3 MB.
+
+See the [administrator setup and permissions guide](docs/ADMIN_GUIDE.md) for the private `npm run admin:create` command, user management, course oversight, suspension, and activity logs. Public registration cannot create administrator accounts; no default production administrator is seeded.
 
 ## Project folders
 
@@ -20,7 +22,7 @@ Deploy the website and API together in one Vercel project using the [deployment 
 
 ## Start the web application
 
-Requirements: Node.js 22.20+ and a reachable MongoDB instance or Atlas cluster.
+Requirements: Node.js 22.20+ and a reachable MongoDB Atlas cluster or local MongoDB replica set. Instructor registration uses a transaction to consume each invitation exactly once; a standalone local MongoDB instance does not support this operation. The existing Atlas deployment supports it.
 
 ```powershell
 npm run setup
@@ -71,7 +73,7 @@ To add only those eight courses to an existing database, run `npm run seed:cours
 
 Students register, browse published courses, join courses, read materials and announcements, submit text and/or attachments, and see grades and feedback. The dashboard tracks upcoming unsubmitted assignments and a weighted overall grade using only graded work. A score of zero is a valid grade.
 
-Instructors register using the private invitation code, create and publish courses, manage materials, assignments and announcements, view enrolled students, and grade submissions with written feedback. Only the owning instructor can manage a course. Published courses are visible in the student catalog; draft courses stay private. Unpublishing closes new enrollment while preserving enrolled students’ access.
+Instructors register using a private, single-use invitation issued through the administrator's web workspace. Successful registration removes the code from the unused list and permanently prevents reuse; the administrator can inspect a read-only used history. Instructors create and publish courses, manage materials, assignments and announcements, view enrolled students, and grade submissions with written feedback. Only the owning instructor can manage a course. Published courses are visible in the student catalog; draft courses stay private. Unpublishing closes new enrollment while preserving enrolled students’ access.
 
 Deleting a course archives it: content becomes inaccessible while database records remain available for recovery. Deleting an assignment permanently removes its submissions, grades, and attachments. Other deleted resources are removed permanently. There is no recovery UI.
 

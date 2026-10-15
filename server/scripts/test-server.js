@@ -1,11 +1,25 @@
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { createServer } from "node:http";
 import { createServerlessHandler } from "../src/runtime.js";
 import { connectDatabase } from "../src/database.js";
 import { seedDemo } from "./seed-data.js";
-const mongo = await MongoMemoryServer.create();
+import bcrypt from "bcryptjs";
+import { createApp } from "../src/app.js";
+const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
 const database = await connectDatabase(mongo.getUri(), "classroom_test");
 await seedDemo(database.db, "Classroom2026!");
+// Test-only administrator; never added by the production demo seed.
+await database.db.collection("lms_users").insertOne({
+  name: "Morgan Reyes",
+  email: "admin@classroom.test",
+  role: "admin",
+  status: "active",
+  passwordHash: await bcrypt.hash("Classroom2026!", 4),
+  bio: "",
+  department: "Administration",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
 const config = {
   secret: "test-only-secret-key-with-at-least-32-characters",
   inviteCode: "test-instructor-code",
@@ -27,6 +41,12 @@ const handler = createServerlessHandler({
     NODE_ENV: "test",
   },
   connect: async () => database,
+  // All browser tests share a loopback IP; production keeps its 180/min limit.
+  makeApp: (options) =>
+    createApp({
+      ...options,
+      config: { ...options.config, apiRequestLimit: 5000 },
+    }),
 });
 const server = createServer(handler).listen(8001, "127.0.0.1", () =>
   console.log(

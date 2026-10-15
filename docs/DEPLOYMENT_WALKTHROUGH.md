@@ -1,5 +1,7 @@
 # Deploy Knowhere to Grow on Vercel
 
+The web application now includes a web-only administrator workspace. After deploying the updated source, follow [ADMIN_GUIDE.md](ADMIN_GUIDE.md) to create the first administrator against the same Atlas database. Existing Vercel environment variables remain sufficient; Flutter remains student-only. Administrators issue single-use instructor invitations: successful signup consumes a code permanently using an Atlas transaction. Unused codes can be edited or deactivated, and consumed codes appear only in read-only used history.
+
 This project deploys React and the Express API together in **one Vercel project**, with MongoDB Atlas storing records and GridFS files. Your local server and PC do not need to run after deployment. Uploads are limited to **3 MB** in the API, web client, and Flutter app to leave room below Vercel Functions' 4.5 MB request limit. No Blob storage setup is required.
 
 ## 1. Check and push the code
@@ -20,7 +22,7 @@ The repository is `g-itlog/LMS_FInalProject`. Review staged files: `.env`, priva
 
 ## 2. Prepare Atlas
 
-Keep `MONGO_DB_NAME=classroom_lms` to use the existing accounts, courses, and files. Rotate the database password previously shared in the project conversation, then update the private connection string in the hosting dashboard and your local `.env`. A database user needs read/write access to this database.
+Keep `MONGO_DB_NAME=classroom_lms` to use the existing accounts, courses, and files. Use your private connection string in the hosting dashboard and your local `.env`. A database user needs read/write access to this database. Atlas supports the transactions required for single-use instructor signup.
 
 Atlas must allow connections from Vercel, not just your PC. Standard Vercel functions can use changing outbound IP addresses. For a student demonstration, Atlas's Network Access screen can allow `0.0.0.0/0`; this permits database connection attempts from all IP addresses, so authentication, a strong private database password, and database-scoped permissions are essential. For restricted production networking, use a static-egress/private-network configuration supported by your hosting/database plans. Never put the database URI in public frontend variables.
 
@@ -46,10 +48,10 @@ Before clicking Deploy, add these private environment variables for Production a
 
 | Variable | Value |
 | --- | --- |
-| `MONGO_URL` | Your Atlas connection string with the new password |
+| `MONGO_URL` | Your private Atlas connection string |
 | `MONGO_DB_NAME` | `classroom_lms` |
 | `JWT_SECRET` | A strong random secret of at least 32 characters |
-| `INSTRUCTOR_INVITE_CODE` | Your private instructor registration code |
+| `INSTRUCTOR_INVITE_CODE` | Your existing code; imported once into the admin-managed list as a single-use invitation |
 | `NODE_ENV` | `production` |
 | `CLIENT_ORIGINS` | Exact HTTPS production origin, such as `https://YOUR-ACTUAL-SITE.vercel.app` |
 

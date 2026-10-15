@@ -14,6 +14,10 @@ import {
   ArrowUpRight,
   ChevronRight,
   PanelTop,
+  Users,
+  ScrollText,
+  ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "./auth";
@@ -39,8 +43,17 @@ const links = [
   ["/grades", "Grades & feedback", GraduationCap],
   ["/announcements", "Announcements", Megaphone],
 ];
+const adminLinks = [
+  ["/", "Overview", LayoutDashboard],
+  ["/admin/users", "Users", Users],
+  ["/admin/courses", "Courses", LibraryBig],
+  ["/admin/invitations", "Invitation codes", KeyRound],
+  ["/admin/activity", "Activity log", ScrollText],
+];
 export default function Shell() {
   const { user, logout } = useAuth();
+  const admin = user.role === "admin";
+  const workspaceLinks = admin ? adminLinks : links;
   const [open, setOpen] = useState(false);
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
@@ -87,7 +100,7 @@ export default function Shell() {
   }, [open]);
   const location = useLocation();
   const current =
-    links.find(([path]) =>
+    workspaceLinks.find(([path]) =>
       path === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(path),
@@ -126,14 +139,18 @@ export default function Shell() {
             <PanelTop size={17} />
           </span>
           <div>
-            {instructor ? "Instructor workspace" : "Student workspace"}
+            {admin
+              ? "Admin workspace"
+              : instructor
+                ? "Instructor workspace"
+                : "Student workspace"}
             <small>Knowhere to Grow</small>
           </div>
           <span className="online-dot" />
         </div>
         <div className="nav-label">WORKSPACE</div>
         <nav aria-label="Workspace">
-          {links.map(([path, label, Icon]) => (
+          {workspaceLinks.map(([path, label, Icon]) => (
             <NavLink
               key={path}
               to={path}
@@ -151,16 +168,28 @@ export default function Shell() {
         <div className="sidebar-bottom">
           <Link
             className="sidebar-catalog"
-            to={instructor ? "/courses?create=1" : "/courses?scope=catalog"}
+            to={
+              admin
+                ? "/admin/activity"
+                : instructor
+                  ? "/courses?create=1"
+                  : "/courses?scope=catalog"
+            }
             onClick={() => setOpen(false)}
           >
             <BookOpen size={21} />
             <span>
-              {instructor ? "Start a new course" : "Find your next course"}
+              {admin
+                ? "Review admin activity"
+                : instructor
+                  ? "Start a new course"
+                  : "Find your next course"}
               <small>
-                {instructor
-                  ? "Build your classroom"
-                  : "Browse the course catalog"}
+                {admin
+                  ? "Account and course changes"
+                  : instructor
+                    ? "Build your classroom"
+                    : "Browse the course catalog"}
               </small>
             </span>
             <ArrowUpRight size={16} />
@@ -187,7 +216,8 @@ export default function Shell() {
             Sign out
           </button>
           <div className="sidebar-caption">
-            KNOWHERE TO GROW / {instructor ? "FACULTY" : "STUDENT"}
+            KNOWHERE TO GROW /{" "}
+            {admin ? "ADMIN" : instructor ? "FACULTY" : "STUDENT"}
           </div>
         </div>
       </aside>
@@ -217,11 +247,11 @@ export default function Shell() {
               }).format(new Date())}
             </span>
             <Link
-              to="/announcements"
+              to={admin ? "/admin/activity" : "/announcements"}
               className="icon-btn"
-              aria-label="Announcements"
+              aria-label={admin ? "Activity log" : "Announcements"}
             >
-              <Megaphone size={19} />
+              {admin ? <ShieldCheck size={19} /> : <Megaphone size={19} />}
             </Link>
             <span className="top-divider" />
             <Link to="/profile" className="user-link">
@@ -234,7 +264,13 @@ export default function Shell() {
               </span>
               <div className="desktop-only">
                 <strong>{user.name}</strong>
-                <small>{instructor ? "Instructor" : "Student"}</small>
+                <small>
+                  {admin
+                    ? "Administrator"
+                    : instructor
+                      ? "Instructor"
+                      : "Student"}
+                </small>
               </div>
             </Link>
           </div>

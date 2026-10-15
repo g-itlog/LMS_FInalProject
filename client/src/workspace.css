@@ -597,7 +597,10 @@ a:focus-visible {
   border-radius: 5px;
   font-size: 13px;
   min-height: 45px;
-  background: #fffefb;
+  background-color: #fffefb;
+}
+.form-select {
+  padding-right: 40px;
 }
 .form-control:focus,
 .form-select:focus {
@@ -606,6 +609,13 @@ a:focus-visible {
 }
 .form-control::placeholder {
   color: #75807a;
+}
+@media (forced-colors: active) {
+  .form-select {
+    appearance: auto;
+    background-image: none;
+    padding-right: 13px;
+  }
 }
 .field > label {
   color: #3c5053;
@@ -809,6 +819,36 @@ a:focus-visible {
 }
 .auth-form-wrap input {
   background: #fffefb;
+}
+.auth-form-wrap .form-control[aria-invalid="true"] {
+  border-color: #a33f38;
+}
+.auth-form-wrap .form-control[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px #a33f3818;
+}
+.field > small.field-error {
+  color: #9b352f;
+}
+.field > small.field-error:empty {
+  display: none;
+}
+.password-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  color: #5f6e70;
+  font-size: 11px;
+}
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.password-requirements .met {
+  color: #37634d;
 }
 .auth-switch {
   color: #5f6e70;

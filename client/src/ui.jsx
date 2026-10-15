@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -83,15 +83,42 @@ export function PageHeading({ eyebrow, title, description, action }) {
     </div>
   );
 }
-export function Field({ label, name, textarea, children, hint, ...props }) {
+export function Field({
+  label,
+  name,
+  textarea,
+  children,
+  hint,
+  error,
+  ...props
+}) {
   const Component = textarea ? "textarea" : "input";
+  const description = [
+    props["aria-describedby"],
+    hint && `${name}-hint`,
+    error && `${name}-error`,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div className="field">
       <label htmlFor={name}>{label}</label>
       {children || (
-        <Component className="form-control" id={name} name={name} {...props} />
+        <Component
+          className="form-control"
+          id={name}
+          name={name}
+          {...props}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={description || undefined}
+        />
       )}
-      {hint && <small>{hint}</small>}
+      {hint && <small id={`${name}-hint`}>{hint}</small>}
+      {error !== undefined && (
+        <small id={`${name}-error`} className="field-error" aria-live="polite">
+          {error}
+        </small>
+      )}
     </div>
   );
 }
@@ -99,6 +126,7 @@ export function Badge({ children, tone = "neutral" }) {
   return <span className={`status-badge ${tone}`}>{children}</span>;
 }
 export function Modal({ title, children, onClose, wide = false }) {
+  const titleId = useId();
   const ref = useRef();
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -124,10 +152,10 @@ export function Modal({ title, children, onClose, wide = false }) {
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      aria-labelledby="modal-title"
+      aria-labelledby={titleId}
     >
       <div className="modal-top">
-        <h2 id="modal-title">{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button
           className="icon-btn"
           onClick={onClose}
@@ -140,7 +168,14 @@ export function Modal({ title, children, onClose, wide = false }) {
     </dialog>
   );
 }
-export function Confirm({ title, text, onClose, onConfirm }) {
+export function Confirm({
+  title,
+  text,
+  onClose,
+  onConfirm,
+  confirmLabel = "Delete",
+  variant = "danger",
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
@@ -156,7 +191,7 @@ export function Confirm({ title, text, onClose, onConfirm }) {
           Cancel
         </Button>
         <Button
-          variant="danger"
+          variant={variant}
           busy={busy}
           onClick={async () => {
             setBusy(true);
@@ -168,7 +203,7 @@ export function Confirm({ title, text, onClose, onConfirm }) {
             }
           }}
         >
-          Delete
+          {confirmLabel}
         </Button>
       </div>
     </Modal>

@@ -17,6 +17,7 @@
     "test": "npm --prefix server test",
     "seed": "npm --prefix server run seed",
     "seed:courses": "npm --prefix server run seed:courses",
+    "admin:create": "npm --prefix server run admin:create --",
     "test:e2e": "npm --prefix client run test:e2e",
     "deploy:check": "node server/scripts/check-vercel.js"
   },

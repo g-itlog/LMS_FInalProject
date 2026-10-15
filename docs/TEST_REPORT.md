@@ -4,76 +4,54 @@ Verification date: **15 October 2026 (Asia/Singapore)**.
 
 | Check | Result | Scope |
 | --- | --- | --- |
-| API, startup, and Vercel adapter tests | **30 passed** | Existing API/catalog/startup checks plus serverless initialization/reuse/retry, secure production-cookie auth, origin checks, and a 3 MB upload/download boundary |
-| React production build | **Passed** | Vite compiles deployable assets in `client/dist` |
-| Vercel configuration check | **Passed locally** | Repository-root config, API-first routing, shared function entry, output directory, and attachment limit; hosted deployment still requires a live smoke test |
-| React lint | **Passed** | ESLint and React Hooks checks |
-| Browser end-to-end tests | **5 passed** | Microsoft Edge; student/instructor workflows, catalog enrollment/download, keyboard navigation, and six workspace pages at 320px, 390px, 768px, and 1280px |
-| Flutter analysis | **Passed — no issues** | Dart source and test analysis |
-| Flutter tests | **15 passed** | API/security-storage tests, attachment upload/size checks, phone rendering, earliest-deadline navigation, and login/dashboard/course layouts at 320px with 1.3× text scaling |
-| Flutter browser build | **Passed** | JavaScript web build with bundled rendering resources; student browser preview available on port 5174 |
-| Flutter browser runtime | **Passed** | Actual browser rendering, real student login, Atlas dashboard access, and secure session restoration after reload |
-| JavaScript dependency audits | **0 vulnerabilities** | Root tools, client, and server audited after compatible fixes |
-| Live Atlas API verification | **Passed** | Database ping/index creation; non-overwriting demo seeding; real mobile student login, dashboard/course/catalog reads, server logout |
-| Android application bundle compilation | **Blocked by environment** | Build attempted; Flutter reports Android SDK could not be found |
-| Android APK/device execution | **Not verified** | Android SDK/emulator/device setup still required |
+| API, startup, provisioning, invitations, and Vercel adapter tests | **48 passed** | Original teaching workflows plus admin role isolation, secure provisioning, suspension/session revocation, history protection, publication, audit logs, and transactional single-use invitation lifecycle/migration/concurrency |
+| React production build | **Passed** | Vite compiles deployable assets in client/dist |
+| Vercel configuration check | **Passed locally** | Repository-root config, shared Express function, API-first routing, output directory, 3 MB limit |
+| React lint | **Passed** | Source and test linting; generated Playwright reports are excluded |
+| Web authentication validation unit tests | **5 passed** | Required fields, email rules, registration strength and UTF-8 limits, login compatibility, instructor-code presence |
+| Browser end-to-end tests | **13 passed** | Real Edge workflows for admins, invitation codes, students, instructors, login/registration validation, publication, grading, uploads, keyboard controls, and phone layouts |
+| Flutter tests | **21 passed** | Existing student/API/rendering tests plus live validation, password rules, mode reset, and narrow-phone large-text checks |
+| Flutter analysis | **Passed ? no issues** | Latest student authentication source and tests |
+| Flutter browser build | **Passed for current student source** | JavaScript browser preview; a browser build does not verify Android/iOS plugins |
+| Hosted admin deployment | **Requires user deployment** | Updated source has not been pushed or deployed by the assistant; no production administrator was automatically created |
+| Android APK/device execution | **Not verified** | Android SDK/emulator/device setup is still required |
 | iOS build/device execution | **Not verified** | Requires macOS, Xcode, and signing |
 
-## API test coverage
+## Server coverage
 
-1. Authentication required; malformed NoSQL-style login input rejected.
-2. Registration normalizes email, hashes passwords, excludes credentials from response, sets HTTP-only cookie.
-3. Duplicate account and weak password rejection.
-4. Instructor invitation required; second instructor and independent student identities.
-5. Students cannot create courses; instructors can.
-6. Ownership, malformed IDs, foreign browser origins, and missing-origin cookie writes rejected.
-7. Course search safely escapes regular-expression characters and returns pagination metadata.
-8. Enrollment required for submissions; duplicate joins do not duplicate enrollment.
-9. Materials upload/edit/download, unauthenticated and unenrolled file access, unsafe URLs, fake PDF signatures.
-10. Announcement create/update and instructor ownership.
-11. Text/file submissions, replacement before grading, password-free review responses, student work privacy.
-12. Student/other-instructor grading rejected, excessive points rejected, zero grade accepted, feedback visible, graded work locked.
-13. Late work rejected or accepted according to instructor policy.
-14. Mobile instructor registration/login rejected; student bearer login, dashboard, logout, and revocation verified.
-15. Profile role escalation prevented; password rotation revokes other sessions.
-16. Material/announcement/assignment deletion; course archival hides all related learning access.
-17. Browser logout revokes the session.
+The original suites verify registration, bcrypt password hashing, JWT/session revocation, cookie security, CORS/origin checks, role checks, course ownership, enrollment, materials, file validation/download, assignment submissions, grading/feedback, announcements, profile/password updates, course archival, expanded catalog behavior, startup port detection, and Vercel function initialization/retry/reuse. Attachment boundary tests accept exactly 3 MB and reject oversized uploads without persisting them.
 
-Three additional catalog tests verify all eight added courses through student bearer authentication, enrollment, private worksheet download, submission, and instructor grading; repeatable seeding that preserves edits/deadlines/grades/files; and protection for archived courses and courses belonging to another instructor.
+Eight admin API tests verify unauthenticated/non-admin denial, blocked public admin signup, blocked administrator mobile login/bearer access, actual overview counts, safe directory responses, student/instructor account creation, strict field validation, protection of administrator accounts, teaching-history role protection, immediate suspension of web/mobile sessions, reactivation, catalog publication, archived-course protection, and attributed activity logs without credentials.
 
-Four startup tests verify recognition of a healthy LMS API and Vite frontend, rejection of an unrelated service on an occupied port, and detection of an available port. Manual runtime checks confirmed that repeated root/client development commands reuse the running LMS without starting duplicate processes. The updated API also connected to Atlas and reported the `classroom_lms` database through its startup log and health endpoint.
+The provisioning command is executed against an isolated database and private temporary credentials file. Its generated password signs in to the web admin API, is absent from command output, cannot authenticate through mobile, and is never overwritten. Reusing an existing email is rejected without modifying that account or retaining a failed credentials file.
 
-Five Vercel adapter tests verify configured/platform origins, shared cold/warm initialization, retry after failed initialization, database cleanup on app initialization failure, and real MongoDB-backed production-cookie registration, protected reads, rejected foreign-origin writes, logout, and revocation. A further workflow test accepts and downloads an attachment of exactly 3 MB, rejects oversized instructor/student uploads, and confirms rejected uploads leave no stored file.
+Nine invitation tests verify admin-only access, secure generation and custom codes, multiple simultaneously active single-use codes, replacement/deactivation/reactivation before use, retained access for existing instructors, environment migration without resurrection, operation without the environment variable after migration, invalid/duplicate input handling, and activity-log secrecy. Successful registration removes the code from the unused list and deletes its plaintext value. Used receipts cannot be edited, reactivated, or recreated with the same value. A concurrent test using two different instructor emails proves only one account is created. A forced duplicate-email insertion inside the transaction proves failure rolls back code consumption and its audit event. Historical multi-use records with previous successful uses are retired on migration. These tests and the instructor registration/browser fixtures use isolated MongoDB replica sets, matching Atlas transaction support.
 
-## Browser test coverage
+## Browser coverage
 
-The student test signs in, navigates courses/materials, submits an assignment, views a grade, switches to phone dimensions, checks horizontal overflow, opens/closes navigation, updates a profile, and signs out. Browser JavaScript errors are collected and asserted absent.
+Five admin workflows cover all admin pages and profile at 1440px, 768px, 390px, and 320px; narrow account/course modals; user creation/editing/suspension/reactivation; protected administrator accounts; searchable logs; course inspection/publication; student route exclusion; invitation creation/copy/edit/deactivation/reactivation before use; successful instructor signup; disappearance from the unused list; read-only used history without code/copy/edit controls; and rejection of a second instructor using the consumed code.
 
-The instructor test signs in, reviews and grades that student submission, creates/publishes a course, creates/edits/deletes a learning material, and deletes the course. Each test captures relevant screenshots using seeded demonstration data in an isolated database.
+Three authentication workflows verify immediate field errors, error correction, password checklist updates and UTF-8 boundaries, focus on the first invalid field, blocked invalid requests, ordinary credential checking, instructor-code behavior, and clearing fields on login/register navigation.
 
-The catalog test verifies both pages of the 12-course catalog, searches for Python, joins the course, downloads its actual TXT worksheet, submits its assignment, and checks the catalog at phone width. The live Atlas catalog was also checked: all eight additions are published, all worksheet downloads succeed, and all pre-existing records were compared and confirmed unchanged.
+The five original workflows verify course catalog pagination/search/enrollment/download, student submissions and profile/logout, instructor grading and content CRUD, bundled fonts, mobile drawer keyboard/focus behavior, and the original workspace pages at phone/tablet/desktop widths. The browser test server uses a temporary MongoDB database. Its aggregate IP limit is raised only in that isolated test configuration because all simulated users share loopback; production retains 180 requests/minute and the sign-in limit remains enabled.
 
-Two responsive workspace tests cover both roles across overview, courses, assignments, grades, announcements, and profile at four widths. They verify bundled font loading, the closed drawer's inert state, focus on opening, Escape dismissal with focus restoration, and the student's next-assignment action. The narrow assignment and grade views use labeled cards rather than a table that requires horizontal scrolling. All five browser tests run through the shared serverless adapter against an isolated MongoDB database; the student workflow also checks the 3 MB validation before submitting work normally.
+## Flutter coverage
 
-## Flutter test coverage
+Student-only API endpoints, bearer headers, secure token persistence, rejection of a non-student response, expired-token clearing, multipart uploads from bytes, oversized-file rejection, dashboard/course/material/submission/grade/profile rendering, deadline navigation, and narrow-phone large-text layouts are tested. The added authentication tests cover as-you-type errors, blank fields remaining quiet before interaction, password requirements and UTF-8 limits, a single show/hide control, blocked invalid submissions, server credential errors, successful student registration, and clearing credentials/errors on form changes.
 
-Six tests verify the student auth endpoint, bearer header, secure token persistence, rejection of an instructor response, expired-token clearing, auth form validation, multipart attachment upload from browser-provided bytes, and oversized-file rejection. Seven rendering/layout tests cover login, dashboard and bottom navigation, materials, assignment form, grade/feedback, profile, and a narrow 320px screen with 1.3× text scaling.
+Flutter screenshots are widget-renderer output with demo fixtures, not emulator or physical-device captures. Native file-picker, installed file-viewer, secure-storage, and device-download behavior still require an Android/iOS smoke test. No admin screens or admin role selection were added to Flutter.
 
-Two additional widget tests verify selection and navigation to the earliest unsubmitted future assignment, plus login, dashboard, and course-list rendering at 320px with 1.3× text scaling. Screenshots load the same bundled Public Sans and Lora fonts as the application.
+## Before the final demonstration
 
-Flutter screenshots are actual native widget renderer output generated by tests with demo-only fixtures read from the shared API. They are **not physical-device or emulator screenshots**. File picker integration, platform secure-storage plugins, external URL launch, and installed file-viewer behavior still need a device smoke test.
-
-## Manual final demonstration checklist
-
-1. Install Android SDK through Android Studio, review/accept its licenses, and connect a device/emulator.
-2. Run the API, configure the Flutter API URL for that device, and build/run the app.
-3. Sign in as the demo instructor on the web and demo student in Flutter.
-4. Upload a real PDF in a course, download/open it from the phone, and verify its contents.
-5. Create an assignment; attach a document using the phone file picker and submit it.
-6. Grade that exact submission on the web; refresh the phone and verify grade and feedback.
-7. Verify mobile instructor login is rejected, and a signed-out token no longer works.
-8. Change placeholder institution/team information in Chapter 1 and the presentation.
+1. Push the reviewed source and confirm the Vercel deployment succeeds.
+2. Create a private administrator against the same Atlas database following ADMIN_GUIDE.md.
+3. Sign in as admin on the website; create/copy an invitation and register a test instructor in a separate browser session.
+4. Confirm the consumed invitation is absent from the unused list and a second signup with it fails. Create another unused code, deactivate it, and verify signup fails. Suspend/reactivate a test account and verify sign-in behavior.
+5. Test course publication and inspect the corresponding admin activity records.
+6. Verify the hosted health endpoint, student/instructor login, material upload/download, submission, and grading with local servers stopped.
+7. Configure the Flutter API_BASE_URL to the deployed HTTPS /api URL and complete native device testing.
+8. Replace bracketed institution/team details in Chapter 1 and the presentation before submission.
 
 ## Reproducibility
 
-Commands are documented in the root README. Test databases are temporary and never use `server/.env`/Atlas. The live verification used only seeded demo accounts and did not change existing template records. The source ZIP excludes secrets and runtime caches. Dependency audit results reflect the installed lockfiles on the verification date and should be rerun before deployment.
+Use npm --prefix server test, npm --prefix client test, npm --prefix client run test:e2e, npm --prefix client run lint, npm run build, and flutter test --no-pub in mobile. API/browser tests use isolated databases; the new tests do not modify Atlas. Private provisioning credentials, environment files, dependencies, and caches are excluded from the source ZIP. Existing dependency audit results predate this admin addition; no new dependency was added by the admin implementation.

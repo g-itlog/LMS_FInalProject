@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'api.dart';
+import 'auth_validation.dart';
 import 'widgets.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class _AuthScreenState extends State<AuthScreen> {
   final name = TextEditingController();
   final email = TextEditingController();
   final password = TextEditingController();
+  final nameFocus = FocusNode();
+  final emailFocus = FocusNode();
+  final passwordFocus = FocusNode();
   bool register = false, busy = false, show = false;
   String? error;
   @override
@@ -21,11 +25,25 @@ class _AuthScreenState extends State<AuthScreen> {
     name.dispose();
     email.dispose();
     password.dispose();
+    nameFocus.dispose();
+    emailFocus.dispose();
+    passwordFocus.dispose();
     super.dispose();
   }
 
   Future<void> submit() async {
-    if (!form.currentState!.validate()) return;
+    if (busy) return;
+    if (!form.currentState!.validate()) {
+      if (register && validateAuthName(name.text) != null) {
+        nameFocus.requestFocus();
+      } else if (validateAuthEmail(email.text) != null) {
+        emailFocus.requestFocus();
+      } else {
+        passwordFocus.requestFocus();
+      }
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       busy = true;
       error = null;
@@ -41,6 +59,21 @@ class _AuthScreenState extends State<AuthScreen> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  void changed(String _) => setState(() => error = null);
+
+  void switchMode() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    form.currentState?.reset();
+    name.clear();
+    email.clear();
+    password.clear();
+    setState(() {
+      register = !register;
+      error = null;
+      show = false;
+    });
   }
 
   @override
@@ -107,40 +140,57 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 30),
                   if (register) ...[
                     TextFormField(
+                      key: const ValueKey('auth-name'),
                       controller: name,
-                      decoration: const InputDecoration(labelText: 'Full name'),
+                      focusNode: nameFocus,
+                      enabled: !busy,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      decoration: const InputDecoration(
+                        labelText: 'Full name',
+                        errorMaxLines: 3,
+                      ),
                       textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (_) => emailFocus.requestFocus(),
+                      onChanged: changed,
                       autofillHints: const [AutofillHints.name],
                       maxLength: 80,
-                      validator: (v) => (v?.trim().length ?? 0) < 2
-                          ? 'Enter at least 2 characters.'
-                          : null,
+                      validator: validateAuthName,
                     ),
                     const SizedBox(height: 17),
                   ],
                   TextFormField(
+                    key: ValueKey('auth-email-$register'),
                     controller: email,
+                    focusNode: emailFocus,
+                    enabled: !busy,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'Email address',
                       counterText: '',
+                      errorMaxLines: 3,
                     ),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => passwordFocus.requestFocus(),
+                    onChanged: changed,
                     autofillHints: const [AutofillHints.email],
                     maxLength: 160,
-                    validator: (v) =>
-                        !RegExp(
-                          r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                        ).hasMatch(v?.trim() ?? '')
-                        ? 'Enter a valid email address.'
-                        : null,
+                    validator: validateAuthEmail,
                   ),
                   const SizedBox(height: 17),
                   TextFormField(
+                    key: ValueKey('auth-password-$register'),
                     controller: password,
+                    focusNode: passwordFocus,
+                    enabled: !busy,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     obscureText: !show,
                     autocorrect: false,
                     enableSuggestions: false,
+                    textInputAction: TextInputAction.done,
+                    onChanged: changed,
                     autofillHints: [
                       register
                           ? AutofillHints.newPassword
@@ -148,12 +198,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ],
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      helperText: register
-                          ? '8–72 characters, uppercase, lowercase, and a number.'
-                          : null,
-                      helperMaxLines: 2,
+                      errorMaxLines: 5,
                       suffixIcon: IconButton(
-                        onPressed: () => setState(() => show = !show),
+                        onPressed: busy
+                            ? null
+                            : () => setState(() => show = !show),
                         tooltip: show ? 'Hide password' : 'Show password',
                         icon: Icon(
                           show
@@ -162,29 +211,65 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Enter your password.';
-                      if (register &&
-                          (v.length < 8 ||
-                              v.length > 72 ||
-                              !RegExp(r'[A-Z]').hasMatch(v) ||
-                              !RegExp(r'[a-z]').hasMatch(v) ||
-                              !RegExp(r'[0-9]').hasMatch(v))) {
-                        return 'Use 8–72 characters with uppercase, lowercase, and a number.';
-                      }
-                      return null;
-                    },
+                    validator: (v) =>
+                        validateAuthPassword(v, register: register),
                     onFieldSubmitted: (_) => busy ? null : submit(),
                   ),
+                  if (register)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 8,
+                        children: passwordRequirements(password.text)
+                            .map(
+                              (rule) => Semantics(
+                                label:
+                                    '${rule.met ? 'Met' : 'Required'}: ${rule.label}',
+                                excludeSemantics: true,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      rule.met
+                                          ? Icons.check
+                                          : Icons.circle_outlined,
+                                      size: 14,
+                                      color: rule.met
+                                          ? const Color(0xFF37634D)
+                                          : muted,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        rule.label,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: rule.met
+                                              ? const Color(0xFF37634D)
+                                              : muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 17),
-                      child: Text(
-                        error!,
-                        style: const TextStyle(
-                          color: Color(0xFF9A3F31),
-                          fontSize: 12,
-                          height: 1.6,
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          error!,
+                          style: const TextStyle(
+                            color: Color(0xFF9A3F31),
+                            fontSize: 12,
+                            height: 1.6,
+                          ),
                         ),
                       ),
                     ),
@@ -202,11 +287,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  register
-                                      ? 'Create student account'
-                                      : 'Sign in',
+                                Expanded(
+                                  child: Text(
+                                    register
+                                        ? 'Create student account'
+                                        : 'Sign in',
+                                  ),
                                 ),
+                                const SizedBox(width: 12),
                                 const Icon(Icons.arrow_forward, size: 19),
                               ],
                             ),
@@ -215,17 +303,12 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 15),
                   Center(
                     child: TextButton(
-                      onPressed: busy
-                          ? null
-                          : () => setState(() {
-                              register = !register;
-                              error = null;
-                              form.currentState?.reset();
-                            }),
+                      onPressed: busy ? null : switchMode,
                       child: Text(
                         register
                             ? 'Already have an account? Sign in'
                             : 'New here? Create a student account',
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),

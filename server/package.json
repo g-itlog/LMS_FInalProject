@@ -14,6 +14,7 @@
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "seed": "node scripts/seed.js",
     "seed:courses": "node scripts/seed-courses.js",
+    "admin:create": "node scripts/create-admin.js",
     "test:serve": "node scripts/test-server.js"
   },
   "author": "",

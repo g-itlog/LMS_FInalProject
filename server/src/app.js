@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import bcrypt from "bcryptjs";
-import { timingSafeEqual } from "node:crypto";
+import { ObjectId } from "mongodb";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +18,8 @@ import {
 import { schemas, validate } from "./validation.js";
 import { courseRoutes } from "./courses.js";
 import { contentRoutes } from "./content.js";
+import { adminRoutes } from "./admin.js";
+import { invitationService } from "./invitations.js";
 import { ATTACHMENT_LIMIT_MESSAGE, MAX_ATTACHMENT_BYTES } from "./limits.js";
 
 export function createApp({ db, bucket, config }) {
@@ -50,7 +52,7 @@ export function createApp({ db, bucket, config }) {
     "/api",
     rateLimit({
       windowMs: 60000,
-      limit: 180,
+      limit: config.apiRequestLimit || 180,
       standardHeaders: "draft-7",
       legacyHeaders: false,
       message: { message: "Too many requests. Please try again shortly." },
@@ -79,34 +81,30 @@ export function createApp({ db, bucket, config }) {
   });
   const auth = authenticate(db, config);
   const users = db.collection("lms_users");
+  const invitations = invitationService(db, config);
   async function register(req, res) {
     const data = validate(schemas.register, req.body);
     const mobile = req.path.startsWith("/api/mobile/");
     if (mobile && data.role !== "student")
       fail(403, "Only students can register in the mobile app.");
-    if (data.role === "instructor") {
-      const actual = Buffer.from(data.inviteCode || "");
-      const expected = Buffer.from(config.inviteCode || "");
-      if (
-        !expected.length ||
-        actual.length !== expected.length ||
-        !timingSafeEqual(actual, expected)
-      )
-        fail(403, "A valid instructor invitation code is required.");
-    }
     if (await users.findOne({ email: data.email }))
       fail(409, "An account with this email already exists.");
+    const passwordHash = await bcrypt.hash(data.password, 12);
     const user = {
+      _id: new ObjectId(),
       name: data.name,
       email: data.email,
-      passwordHash: await bcrypt.hash(data.password, 12),
+      passwordHash,
       role: data.role,
       bio: "",
       department: "",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    const result = await users.insertOne(user);
+    const result =
+      data.role === "instructor"
+        ? await invitations.register(user, data.inviteCode)
+        : await users.insertOne(user);
     user._id = result.insertedId;
     const token = await startSession(db, res, user, config, mobile);
     res
@@ -122,13 +120,19 @@ export function createApp({ db, bucket, config }) {
         "$2b$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW",
     );
     if (!user || !matches) fail(401, "Email or password is incorrect.");
+    if (user.status === "suspended")
+      fail(403, "This account is suspended. Contact your administrator.");
     const mobile = req.path.startsWith("/api/mobile/");
     if (mobile && user.role !== "student")
       fail(
         403,
-        "The mobile app is for students only. Instructors can sign in on the web.",
+        "The mobile app is for students only. Please sign in on the website with this account.",
       );
     const token = await startSession(db, res, user, config, mobile);
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { lastLoginAt: new Date() } },
+    );
     res.json({ user: publicUser(user), ...(mobile ? { token } : {}) });
   }
   app.post(
@@ -174,7 +178,21 @@ export function createApp({ db, bucket, config }) {
       ...(mobile ? { token } : {}),
     });
   });
-  app.use("/api", auth, courseRoutes(db, bucket), contentRoutes(db, bucket));
+  app.use(
+    "/api",
+    auth,
+    adminRoutes(db, invitations),
+    (req, res, next) => {
+      if (req.user.role === "admin")
+        return res.status(403).json({
+          message:
+            "Use the administration workspace to oversee courses and users.",
+        });
+      next();
+    },
+    courseRoutes(db, bucket),
+    contentRoutes(db, bucket),
+  );
   app.use("/api", (req, res) =>
     res.status(404).json({ message: "API endpoint not found." }),
   );
@@ -201,7 +219,9 @@ export function createApp({ db, bucket, config }) {
     res.status(status).json({
       message:
         error.code === 11000
-          ? "This record already exists. Use a different email or course code."
+          ? error.keyPattern?.codeHash
+            ? "An invitation code with this value already exists."
+            : "This record already exists. Use a different email or course code."
           : status === 413
             ? ATTACHMENT_LIMIT_MESSAGE
             : status >= 500

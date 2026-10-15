@@ -1,10 +1,11 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { createApp } from "../src/app.js";
 import { connectDatabase } from "../src/database.js";
 import { MAX_ATTACHMENT_BYTES } from "../src/limits.js";
+import { invitationFields } from "../src/invitations.js";
 
 let mongo,
   database,
@@ -32,8 +33,15 @@ const course = {
 const post = (agent, url) => agent.post(url).set("Origin", origin);
 const patch = (agent, url) => agent.patch(url).set("Origin", origin);
 before(async () => {
-  mongo = await MongoMemoryServer.create();
+  mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   database = await connectDatabase(mongo.getUri(), "lms_integration_test");
+  await database.db.collection("lms_invitations").insertOne({
+    ...invitationFields("second-private-test-code"),
+    label: "Second teacher",
+    active: true,
+    useCount: 0,
+    createdAt: new Date(),
+  });
   app = createApp({
     ...database,
     config: {
@@ -109,7 +117,7 @@ test("instructor registration requires a private invitation", async () => {
       email: "other@example.test",
       password,
       role: "instructor",
-      inviteCode: "private-test-code",
+      inviteCode: "second-private-test-code",
     })
     .expect(201);
   await post(stranger, "/api/auth/register")

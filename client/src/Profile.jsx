@@ -65,7 +65,11 @@ export default function Profile() {
           <h2>{user.name}</h2>
           <p>{user.email}</p>
           <Badge tone="purple">
-            {user.role === "instructor" ? "Instructor" : "Student"}
+            {user.role === "admin"
+              ? "Administrator"
+              : user.role === "instructor"
+                ? "Instructor"
+                : "Student"}
           </Badge>
           {user.department && (
             <p className="profile-department">{user.department}</p>
