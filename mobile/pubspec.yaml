@@ -1,0 +1,23 @@
+name: classroom_mobile
+description: Classroom LMS student application connected to the shared MERN API.
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ^3.12.0
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.5.0
+  flutter_secure_storage: ^9.2.4
+  file_picker: ^10.3.3
+  path_provider: ^2.1.5
+  open_filex: ^4.7.0
+  url_launcher: ^6.3.2
+  intl: ^0.20.2
+  web: ^1.1.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true

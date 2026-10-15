@@ -1,0 +1,347 @@
+{
+  "user": {
+    "_id": "6ad0564845ebdfa69086e974",
+    "email": "student@classroom.test",
+    "bio": "BS Information Technology student. Learning one project at a time.",
+    "createdAt": "2026-10-15T04:27:51.537Z",
+    "department": "School of Information Technology",
+    "name": "Jamie Santos",
+    "role": "student",
+    "updatedAt": "2026-10-15T04:27:51.537Z"
+  },
+  "dashboard": {
+    "courses": [
+      {
+        "_id": "6ad0566bd4dfabdfc8153b7b",
+        "code": "IT 202",
+        "title": "Database Management Systems",
+        "category": "Information Technology",
+        "color": "blue",
+        "description": "Turn data into useful information. Explore database modeling, CRUD operations, indexing, and secure data access with hands-on exercises.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:28:27.239Z",
+        "updatedAt": "2026-10-15T04:28:27.239Z"
+      },
+      {
+        "_id": "6ad0566ad4dfabdfc8153b76",
+        "code": "IT 204",
+        "title": "User Interface & Experience Design",
+        "category": "Design",
+        "color": "teal",
+        "description": "Design thoughtful digital experiences. Explore research, accessible interfaces, responsive layouts, and the small details that make technology feel human.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:28:26.971Z",
+        "updatedAt": "2026-10-15T04:28:26.971Z"
+      },
+      {
+        "_id": "6ad056477650f0e6982115f3",
+        "code": "IT 301",
+        "title": "Full-Stack Web Development",
+        "category": "Computer Science",
+        "color": "violet",
+        "description": "Build secure, useful web applications with MongoDB, Express, React, and Node.js. Learn through practical projects and thoughtful feedback.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z"
+      }
+    ],
+    "assignments": [
+      {
+        "_id": "6ad0572045ebdfa69086e991",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Project proposal & system flow",
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-10T04:31:27.417Z",
+        "dueDate": "2026-10-14T04:31:27.417Z",
+        "instructions": "Describe a real-world problem your application will solve. Identify the users, outline the main features, and include a system flowchart.",
+        "maxPoints": 100,
+        "updatedAt": "2026-10-15T04:31:27.112Z",
+        "course": {
+          "title": "Full-Stack Web Development",
+          "code": "IT 301",
+          "color": "violet"
+        }
+      },
+      {
+        "_id": "6ad056477650f0e6982115f5",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Build your first REST API",
+        "instructions": "Create a practical solution using the concepts discussed in class. Include your source code, a brief explanation of your decisions, and evidence that you tested your work. Submit a PDF report or a ZIP of your source files.",
+        "dueDate": "2026-10-17T04:27:51.695Z",
+        "maxPoints": 100,
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z",
+        "course": {
+          "title": "Full-Stack Web Development",
+          "code": "IT 301",
+          "color": "violet"
+        }
+      },
+      {
+        "_id": "6ad0566bd4dfabdfc8153b78",
+        "courseId": "6ad0566ad4dfabdfc8153b76",
+        "title": "Design a responsive learning dashboard",
+        "instructions": "Create a practical solution using the concepts discussed in class. Include your source code, a brief explanation of your decisions, and evidence that you tested your work. Submit a PDF report or a ZIP of your source files.",
+        "dueDate": "2026-10-18T04:28:27.061Z",
+        "maxPoints": 100,
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:28:26.971Z",
+        "updatedAt": "2026-10-15T04:28:26.971Z",
+        "course": {
+          "title": "User Interface & Experience Design",
+          "code": "IT 204",
+          "color": "teal"
+        }
+      },
+      {
+        "_id": "6ad0566bd4dfabdfc8153b7d",
+        "courseId": "6ad0566bd4dfabdfc8153b7b",
+        "title": "Model a learning management database",
+        "instructions": "Create a practical solution using the concepts discussed in class. Include your source code, a brief explanation of your decisions, and evidence that you tested your work. Submit a PDF report or a ZIP of your source files.",
+        "dueDate": "2026-10-19T04:28:27.329Z",
+        "maxPoints": 100,
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:28:27.239Z",
+        "updatedAt": "2026-10-15T04:28:27.239Z",
+        "course": {
+          "title": "Database Management Systems",
+          "code": "IT 202",
+          "color": "blue"
+        }
+      }
+    ],
+    "announcements": [
+      {
+        "_id": "6ad056477650f0e6982115f7",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Welcome to your next chapter 👋",
+        "body": "Our classroom is ready for you. Start with the learning resources, take a look at your first assignment, and make a little progress each day. If you need help, bring your questions to our next meeting.",
+        "pinned": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z",
+        "course": {
+          "title": "Full-Stack Web Development",
+          "code": "IT 301",
+          "color": "violet"
+        }
+      },
+      {
+        "_id": "6ad0566bd4dfabdfc8153b7f",
+        "courseId": "6ad0566bd4dfabdfc8153b7b",
+        "title": "Welcome to IT 202",
+        "body": "Our classroom is ready for you. Start with the learning resources, take a look at your first assignment, and make a little progress each day. If you need help, bring your questions to our next meeting.",
+        "pinned": false,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:28:27.239Z",
+        "updatedAt": "2026-10-15T04:28:27.239Z",
+        "course": {
+          "title": "Database Management Systems",
+          "code": "IT 202",
+          "color": "blue"
+        }
+      },
+      {
+        "_id": "6ad0566bd4dfabdfc8153b7a",
+        "courseId": "6ad0566ad4dfabdfc8153b76",
+        "title": "Welcome to IT 204",
+        "body": "Our classroom is ready for you. Start with the learning resources, take a look at your first assignment, and make a little progress each day. If you need help, bring your questions to our next meeting.",
+        "pinned": false,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:28:26.971Z",
+        "updatedAt": "2026-10-15T04:28:26.971Z",
+        "course": {
+          "title": "User Interface & Experience Design",
+          "code": "IT 204",
+          "color": "teal"
+        }
+      }
+    ],
+    "submissions": [
+      {
+        "_id": "6ad0572045ebdfa69086e992",
+        "assignmentId": "6ad0572045ebdfa69086e991",
+        "studentId": "6ad0564845ebdfa69086e974",
+        "courseId": "6ad056477650f0e6982115f3",
+        "feedback": "Clear problem statement and a practical scope. Your role separation is well considered. Add more detail to the assignment submission and grading flow before implementation.",
+        "file": null,
+        "grade": 92,
+        "gradedAt": "2026-10-14T04:31:27.506Z",
+        "gradedBy": "6ad0564845ebdfa69086e973",
+        "late": false,
+        "submittedAt": "2026-10-13T04:31:27.506Z",
+        "text": "My proposal is a learning management system that connects students and instructors. Students can access resources and submit work, while instructors organize courses and provide feedback. The mobile app will give students the same learning access on their phones.",
+        "course": {
+          "title": "Full-Stack Web Development",
+          "code": "IT 301",
+          "color": "violet"
+        },
+        "studentName": "Jamie Santos"
+      }
+    ],
+    "studentCount": 1,
+    "materialCount": 3
+  },
+  "course": {
+    "_id": "6ad056477650f0e6982115f3",
+    "code": "IT 301",
+    "title": "Full-Stack Web Development",
+    "category": "Computer Science",
+    "color": "violet",
+    "description": "Build secure, useful web applications with MongoDB, Express, React, and Node.js. Learn through practical projects and thoughtful feedback.",
+    "instructorId": "6ad0564845ebdfa69086e973",
+    "published": true,
+    "createdAt": "2026-10-15T04:27:51.631Z",
+    "updatedAt": "2026-10-15T04:27:51.631Z",
+    "instructorName": "Alex Rivera",
+    "enrolled": true,
+    "studentCount": 1,
+    "materials": [
+      {
+        "_id": "6ad056477650f0e6982115f6",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Getting started with React",
+        "description": "Start here: read the official guide, try the examples, and write down any questions for our next class.",
+        "url": "https://react.dev/learn",
+        "file": null,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z"
+      }
+    ],
+    "assignments": [
+      {
+        "_id": "6ad0572045ebdfa69086e991",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Project proposal & system flow",
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-10T04:31:27.417Z",
+        "dueDate": "2026-10-14T04:31:27.417Z",
+        "instructions": "Describe a real-world problem your application will solve. Identify the users, outline the main features, and include a system flowchart.",
+        "maxPoints": 100,
+        "updatedAt": "2026-10-15T04:31:27.112Z"
+      },
+      {
+        "_id": "6ad056477650f0e6982115f5",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Build your first REST API",
+        "instructions": "Create a practical solution using the concepts discussed in class. Include your source code, a brief explanation of your decisions, and evidence that you tested your work. Submit a PDF report or a ZIP of your source files.",
+        "dueDate": "2026-10-17T04:27:51.695Z",
+        "maxPoints": 100,
+        "allowLate": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z"
+      }
+    ],
+    "announcements": [
+      {
+        "_id": "6ad056477650f0e6982115f7",
+        "courseId": "6ad056477650f0e6982115f3",
+        "title": "Welcome to your next chapter 👋",
+        "body": "Our classroom is ready for you. Start with the learning resources, take a look at your first assignment, and make a little progress each day. If you need help, bring your questions to our next meeting.",
+        "pinned": true,
+        "authorId": "6ad0564845ebdfa69086e973",
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z"
+      }
+    ],
+    "submissions": [
+      {
+        "_id": "6ad0572045ebdfa69086e992",
+        "assignmentId": "6ad0572045ebdfa69086e991",
+        "studentId": "6ad0564845ebdfa69086e974",
+        "courseId": "6ad056477650f0e6982115f3",
+        "feedback": "Clear problem statement and a practical scope. Your role separation is well considered. Add more detail to the assignment submission and grading flow before implementation.",
+        "file": null,
+        "grade": 92,
+        "gradedAt": "2026-10-14T04:31:27.506Z",
+        "gradedBy": "6ad0564845ebdfa69086e973",
+        "late": false,
+        "submittedAt": "2026-10-13T04:31:27.506Z",
+        "text": "My proposal is a learning management system that connects students and instructors. Students can access resources and submit work, while instructors organize courses and provide feedback. The mobile app will give students the same learning access on their phones."
+      }
+    ],
+    "students": []
+  },
+  "catalog": {
+    "items": [
+      {
+        "_id": "6ad0566bd4dfabdfc8153b80",
+        "code": "IT 305",
+        "title": "Mobile Application Development",
+        "category": "Mobile Development",
+        "color": "orange",
+        "description": "Create connected mobile experiences with Flutter. Practice layouts, navigation, forms, API integration, and secure session management.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:28:27.516Z",
+        "updatedAt": "2026-10-15T04:28:27.516Z",
+        "instructorName": "Alex Rivera",
+        "studentCount": 0,
+        "assignmentCount": 1,
+        "enrolled": false
+      },
+      {
+        "_id": "6ad0566bd4dfabdfc8153b7b",
+        "code": "IT 202",
+        "title": "Database Management Systems",
+        "category": "Information Technology",
+        "color": "blue",
+        "description": "Turn data into useful information. Explore database modeling, CRUD operations, indexing, and secure data access with hands-on exercises.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:28:27.239Z",
+        "updatedAt": "2026-10-15T04:28:27.239Z",
+        "instructorName": "Alex Rivera",
+        "studentCount": 1,
+        "assignmentCount": 1,
+        "enrolled": true
+      },
+      {
+        "_id": "6ad0566ad4dfabdfc8153b76",
+        "code": "IT 204",
+        "title": "User Interface & Experience Design",
+        "category": "Design",
+        "color": "teal",
+        "description": "Design thoughtful digital experiences. Explore research, accessible interfaces, responsive layouts, and the small details that make technology feel human.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:28:26.971Z",
+        "updatedAt": "2026-10-15T04:28:26.971Z",
+        "instructorName": "Alex Rivera",
+        "studentCount": 1,
+        "assignmentCount": 1,
+        "enrolled": true
+      },
+      {
+        "_id": "6ad056477650f0e6982115f3",
+        "code": "IT 301",
+        "title": "Full-Stack Web Development",
+        "category": "Computer Science",
+        "color": "violet",
+        "description": "Build secure, useful web applications with MongoDB, Express, React, and Node.js. Learn through practical projects and thoughtful feedback.",
+        "instructorId": "6ad0564845ebdfa69086e973",
+        "published": true,
+        "createdAt": "2026-10-15T04:27:51.631Z",
+        "updatedAt": "2026-10-15T04:27:51.631Z",
+        "instructorName": "Alex Rivera",
+        "studentCount": 1,
+        "assignmentCount": 2,
+        "enrolled": true
+      }
+    ],
+    "total": 4,
+    "page": 1,
+    "pages": 1
+  }
+}

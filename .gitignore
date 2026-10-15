@@ -1,0 +1,32 @@
+node_modules/
+.npm-cache/
+.env
+.env.*
+!.env.example
+dist/
+test-results/
+playwright-report/
+*.log
+.cache/
+.local-credentials.txt
+backup/
+mobile/build/
+mobile/.dart_tool/
+mobile/android/local.properties
+.tooling/
+
+# Generated packages and hosting/editor state
+submission/
+.vercel/
+.idea/
+.vscode/
+coverage/
+.DS_Store
+Thumbs.db
+
+# Private keys and platform signing credentials
+*.pem
+*.key
+*.jks
+*.keystore
+key.properties

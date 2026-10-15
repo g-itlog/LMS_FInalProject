@@ -1,0 +1,4 @@
+# Keep the browser origin stable for API access and secure-storage testing.
+server:
+  host: localhost
+  port: 5174

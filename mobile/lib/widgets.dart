@@ -1,0 +1,197 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'api.dart';
+
+const purple = Color(0xFF7861C7);
+const ink = Color(0xFF332B47);
+const muted = Color(0xFF8D829D);
+const surface = Color(0xFFF8F7FC);
+Color courseColor(dynamic value) => switch (value) {
+  'blue' => const Color(0xFFE6EDFB),
+  'teal' => const Color(0xFFE3F2EC),
+  'orange' => const Color(0xFFFBEEDE),
+  'pink' => const Color(0xFFF7E5EF),
+  _ => const Color(0xFFEDE6FA),
+};
+String date(dynamic value, {bool time = false}) {
+  if (value == null) return '—';
+  final parsed = DateTime.tryParse(value.toString());
+  return parsed == null
+      ? '—'
+      : DateFormat(
+          time ? 'MMM d, y · h:mm a' : 'MMM d, y',
+        ).format(parsed.toLocal());
+}
+
+List<Json> records(dynamic value) =>
+    (value as List? ?? []).map((e) => Map<String, dynamic>.from(e)).toList();
+void notify(BuildContext context, String text, {bool error = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(text),
+      backgroundColor: error ? const Color(0xFFB85B72) : ink,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+}
+
+class AppCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final Color? color;
+  const AppCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+    this.color,
+  });
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: padding,
+    decoration: BoxDecoration(
+      color: color ?? Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFECE8F2)),
+    ),
+    child: child,
+  );
+}
+
+class Tag extends StatelessWidget {
+  final String text;
+  final Color color;
+  const Tag(this.text, {super.key, this.color = purple});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+class Heading extends StatelessWidget {
+  final String title, subtitle;
+  const Heading(this.title, this.subtitle, {super.key});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 22),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 27,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.8,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          style: const TextStyle(color: muted, height: 1.6, fontSize: 12),
+        ),
+      ],
+    ),
+  );
+}
+
+class EmptyView extends StatelessWidget {
+  final String title, subtitle;
+  const EmptyView(this.title, this.subtitle, {super.key});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 45, horizontal: 20),
+    child: Center(
+      child: Column(
+        children: [
+          const Icon(Icons.auto_stories_outlined, color: purple, size: 42),
+          const SizedBox(height: 20),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: muted, height: 1.6, fontSize: 12),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class ErrorView extends StatelessWidget {
+  final Object error;
+  final VoidCallback retry;
+  const ErrorView(this.error, this.retry, {super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_outlined, color: muted, size: 42),
+          const SizedBox(height: 15),
+          Text(
+            error.toString(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: muted, height: 1.7),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(onPressed: retry, child: const Text('Try again')),
+        ],
+      ),
+    ),
+  );
+}
+
+class DownloadButton extends StatefulWidget {
+  final LmsApi api;
+  final Json file;
+  const DownloadButton({super.key, required this.api, required this.file});
+  @override
+  State<DownloadButton> createState() => _DownloadButtonState();
+}
+
+class _DownloadButtonState extends State<DownloadButton> {
+  bool busy = false;
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    onPressed: busy
+        ? null
+        : () async {
+            setState(() => busy = true);
+            try {
+              final message = await widget.api.download(widget.file);
+              if (context.mounted) notify(context, message);
+            } catch (e) {
+              if (context.mounted) notify(context, e.toString(), error: true);
+            } finally {
+              if (mounted) setState(() => busy = false);
+            }
+          },
+    icon: busy
+        ? const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(Icons.download_outlined, size: 18),
+    label: Text(
+      busy ? 'Downloading…' : widget.file['name'],
+      overflow: TextOverflow.ellipsis,
+    ),
+  );
+}
